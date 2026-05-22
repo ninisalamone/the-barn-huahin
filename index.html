@@ -1192,7 +1192,9 @@ function submitBooking(){
   }else{
     reservations.push({id:'RES'+Date.now(),guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
   }
-  save();clearForm();alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
+  save();clearForm();
+  sendLineNotify('🆕 New Booking', reservations[reservations.length-1] || reservations.find(r=>r.guest===guest&&r.room===room));
+  alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
 }
 
 function populateFilterRoom(){
@@ -1245,9 +1247,9 @@ function renderRes(){
   }).join('');
 }
 
-function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();renderDash();renderRes()}}
-function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';save();renderDash();renderRes()}}
-function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();renderDash();renderRes()}}
+function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();sendLineNotify('✅ Check-In',r);renderDash();renderRes()}}
+function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';save();sendLineNotify('🏁 Check-Out',r);renderDash();renderRes()}}
+function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open')}));
@@ -1682,6 +1684,29 @@ function setResTab(tab){
   // Hide status filter for cancelled tab
   document.getElementById('filterStatus').style.display = tab==='active'?'':'none';
   renderRes();
+}
+
+// ===================== LINE NOTIFICATION =====================
+function sendLineNotify(type, res){
+  if(!res) return;
+  const n = Math.max(0,Math.round((new Date(String(res.checkout).split('T')[0])-new Date(String(res.checkin).split('T')[0]))/86400000));
+  const total = (parseFloat(res.rate)||0) * n;
+  fetch(GS_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify({
+      action:'notify',
+      type: type,
+      reservation: {
+        guest:res.guest, phone:res.phone, room:res.room,
+        checkin:String(res.checkin).split('T')[0],
+        checkout:String(res.checkout).split('T')[0],
+        source:res.source, rate:res.rate||0,
+        pet:res.pet, breakfast:res.breakfast, remark:res.remark
+      }
+    })
+  }).catch(()=>{});
 }
 
 // ===================== INIT =====================

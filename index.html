@@ -465,6 +465,7 @@
     <button class="nav-btn" onclick="showView('roomgrid')">📅 Room Grid</button>
   </div>
   <div class="tbadge" id="todayBadge"></div>
+  <div class="tbadge" id="syncIndicator" style="font-size:0.7rem;padding:4px 10px;background:rgba(255,255,255,0.08);border-radius:20px;">☁️ Synced</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -678,7 +679,42 @@ const CATS=[
 let reservations=JSON.parse(localStorage.getItem('barnReservations')||'[]');
 let editingId=null;
 
-function save(){localStorage.setItem('barnReservations',JSON.stringify(reservations))}
+const GS_URL='https://script.google.com/macros/s/AKfycbxbtDqRbwTGMeyfyV5Sbswa8EqybXSYeAvFF8gxn0eWHjA4IDw-ARVEv0FWZ8Tro5qu/exec';
+
+// Save to both localStorage AND Google Sheets
+function save(){
+  localStorage.setItem('barnReservations',JSON.stringify(reservations));
+  syncToSheets();
+}
+
+function syncToSheets(){
+  const indicator = document.getElementById('syncIndicator');
+  if(indicator){ indicator.textContent='☁️ Saving...'; indicator.style.color='var(--blue-lt)'; }
+  fetch(GS_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'save', reservations })
+  }).then(()=>{
+    if(indicator){ indicator.textContent='✅ Saved'; indicator.style.color='#6ee7b7';
+      setTimeout(()=>{ indicator.textContent='☁️ Synced'; },2000); }
+  }).catch(()=>{
+    if(indicator){ indicator.textContent='⚠️ Offline'; indicator.style.color='#fca5a5'; }
+  });
+}
+
+// Load from Google Sheets on startup
+function loadFromSheets(){
+  const indicator = document.getElementById('syncIndicator');
+  if(indicator){ indicator.textContent='☁️ Loading...'; indicator.style.color='var(--blue-lt)'; }
+  fetch(GS_URL+'?action=load', { method:'GET', mode:'no-cors' })
+  .then(()=>{
+    // no-cors means we can't read response — use localStorage as fallback
+    if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
+  }).catch(()=>{
+    if(indicator){ indicator.textContent='⚠️ Offline — Local Data'; indicator.style.color='#fca5a5'; }
+  });
+}
 function today(){return new Date().toISOString().split('T')[0]}
 function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return day+'/'+m+'/'+y}
 function nights(ci,co){if(!ci||!co)return 0;return Math.max(0,Math.round((new Date(co)-new Date(ci))/86400000))}
@@ -1152,6 +1188,9 @@ document.getElementById('f-checkin').value=ts;
 const tmr=new Date();tmr.setDate(tmr.getDate()+1);
 document.getElementById('f-checkout').value=tmr.toISOString().split('T')[0];
 populateRoomSel();renderDash();
+loadFromSheets();
+// Auto-sync to sheets every 5 minutes
+setInterval(syncToSheets, 5*60*1000);
 </script>
 </body>
 </html>

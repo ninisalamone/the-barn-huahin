@@ -896,16 +896,17 @@ function loadFromSheets(){
         .filter(row=>row[0])
         .map(row=>({
           id:row[0], guest:row[1], phone:row[2], room:row[3],
-          source:row[4], checkin:row[5], checkout:row[6],
-          guests:row[8], payment:row[9],
-          breakfast:row[10]==='Yes', extrabed:row[11]==='Yes',
-          pet:row[12]==='Yes', remark:row[13],
-          status:row[14], createdAt:row[15]
+          source:row[4],
+          checkin:String(row[5]).split('T')[0],
+          checkout:String(row[6]).split('T')[0],
+          guests:row[8], rate:parseFloat(row[9])||0, payment:row[10]||'',
+          breakfast:row[11]==='Yes', extrabed:row[12]==='Yes',
+          pet:row[13]==='Yes', remark:row[14]||'',
+          status:row[15]||'Reserved', createdAt:row[16]||''
         }));
       if(loaded.length > 0){
         reservations = loaded;
         localStorage.setItem('barnReservations',JSON.stringify(reservations));
-        renderDash();
         if(indicator){ indicator.textContent='☁️ Loaded '+loaded.length+' bookings'; indicator.style.color='#6ee7b7'; }
       } else {
         if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
@@ -913,8 +914,19 @@ function loadFromSheets(){
     } else {
       if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
     }
+    // Always refresh all views after load
+    renderDash();
+    const activeView = document.querySelector('.view.active');
+    if(activeView){
+      const v = activeView.id.replace('view-','');
+      if(v==='reservations') renderRes();
+      if(v==='roomgrid') renderRoomGrid();
+      if(v==='floorplan') renderFloorPlan();
+      if(v==='report') renderReport();
+    }
   }).catch(()=>{
     if(indicator){ indicator.textContent='📱 Local Only'; indicator.style.color='#fca5a5'; }
+    renderDash();
   });
 }
 function today(){return new Date().toISOString().split('T')[0]}
@@ -963,7 +975,7 @@ function showView(v){
     renderFloorPlan();
   }
   if(v==='report')renderReport();
-  if(v==='roomgrid') setTimeout(renderRoomGrid, 30);
+  if(v==='roomgrid') renderRoomGrid();
 }
 
 function renderDash(){

@@ -889,11 +889,11 @@ function populateRoomSel(){
       if(hasDates){
         const avail = isRoomAvailableForDates(r.num, ci, co);
         if(avail) availCount++;
-        o.textContent = 'Room '+r.num + (avail ? ' ✓ Available' : ' ✗ Booked');
+        o.textContent = 'Room '+r.num+' — '+r.type + (avail ? '' : ' (Unavailable)');
         o.disabled = !avail;
-        o.style.color = avail ? '' : '#aaa';
+        o.style.color = avail ? '' : '#bbb';
       } else {
-        o.textContent = 'Room '+r.num;
+        o.textContent = 'Room '+r.num+' — '+r.type;
       }
       if(r.num===cur) o.selected=true;
       g.appendChild(o);
@@ -907,7 +907,7 @@ function populateRoomSel(){
     errEl.style.display='block';
     errEl.style.background='#e0f2fe';
     errEl.style.color='#0369a1';
-    errEl.textContent = '✓ '+availCount+' rooms available for '+fmtDate(ci)+' → '+fmtDate(co);
+    errEl.textContent = '✓ '+availCount+' rooms available for '+fmtDate(ci)+' → '+fmtDate(co)+' — unavailable rooms are blocked';
   } else {
     errEl.style.display='none';
   }

@@ -503,7 +503,7 @@
 <body>
 
 <!-- LOGIN OVERLAY -->
-<div class="login-overlay" id="loginOverlay">
+<div class="login-overlay" id="loginOverlay" style="display:flex">
   <div class="login-box">
     <div class="login-logo">🏡</div>
     <div class="login-title">The Barn Hua Hin</div>
@@ -511,6 +511,7 @@
     <input type="text" id="loginName" placeholder="Your name *">
     <select id="loginShift">
       <option value="">— Select Shift —</option>
+      <option>Admin</option>
       <option>Morning (06:00–14:00)</option>
       <option>Afternoon (14:00–22:00)</option>
       <option>Night (22:00–06:00)</option>
@@ -530,12 +531,12 @@
     </div>
   </div>
   <div class="hnav">
-    <button class="nav-btn active" onclick="showView('dashboard')">🏠 <span class="t" data-en="Dashboard" data-th="หน้าหลัก">Dashboard</span></button>
-    <button class="nav-btn" onclick="showView('booking')">➕ <span class="t" data-en="New Booking" data-th="จองห้อง">New Booking</span></button>
-    <button class="nav-btn" onclick="showView('reservations')">📋 <span class="t" data-en="Reservations" data-th="การจอง">Reservations</span></button>
-    <button class="nav-btn" onclick="showView('floorplan')">🗺️ <span class="t" data-en="Floor Plan" data-th="ผังห้อง">Floor Plan</span></button>
-    <button class="nav-btn" onclick="showView('roomgrid')">📅 <span class="t" data-en="Room Grid" data-th="ตารางห้อง">Room Grid</span></button>
-    <button class="nav-btn" onclick="showView('report')">📊 <span class="t" data-en="Report" data-th="รายงาน">Report</span></button>
+    <button class="nav-btn active" onclick="showView('dashboard')">🏠 <span data-key="dashboard">Dashboard</span></button>
+    <button class="nav-btn" onclick="showView('booking')">➕ <span data-key="newbooking">New Booking</span></button>
+    <button class="nav-btn" onclick="showView('reservations')">📋 <span data-key="reservations">Reservations</span></button>
+    <button class="nav-btn" onclick="showView('floorplan')">🗺️ <span data-key="floorplan">Floor Plan</span></button>
+    <button class="nav-btn" onclick="showView('roomgrid')">📅 <span data-key="roomgrid">Room Grid</span></button>
+    <button class="nav-btn" onclick="showView('report')">📊 <span data-key="report">Report</span></button>
   </div>
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0">
     <div class="lang-toggle">
@@ -565,12 +566,12 @@
   <div class="sec-title">➕ New Reservation</div>
   <div class="form-card">
     <div class="form-grid">
-      <div class="fgrp"><label>Guest Name *</label><input type="text" id="f-guest" placeholder="Full name"></div>
-      <div class="fgrp"><label>Telephone *</label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
-      <div class="fgrp"><label>Check-In Date *</label><input type="date" id="f-checkin" onchange="onDateChange()"></div>
-      <div class="fgrp"><label>Check-Out Date *</label><input type="date" id="f-checkout" onchange="onDateChange()"></div>
-      <div class="fgrp"><label>Room *</label><select id="f-room"><option value="">— Select dates first —</option></select></div>
-      <div class="fgrp"><label>Booking Source *</label>
+      <div class="fgrp"><label><span data-key="guestname">Guest Name</span> *</label><input type="text" id="f-guest" placeholder="Full name"></div>
+      <div class="fgrp"><label><span data-key="telephone">Telephone</span> *</label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
+      <div class="fgrp"><label><span data-key="checkin">Check-In Date</span> *</label><input type="date" id="f-checkin" onchange="onDateChange()"></div>
+      <div class="fgrp"><label><span data-key="checkout">Check-Out Date</span> *</label><input type="date" id="f-checkout" onchange="onDateChange()"></div>
+      <div class="fgrp"><label><span data-key="room">Room</span> *</label><select id="f-room"><option value="">— Select dates first —</option></select></div>
+      <div class="fgrp"><label><span data-key="source">Booking Source</span> *</label>
         <select id="f-source">
           <option value="">— Select Source —</option>
           <option>Walk-in</option><option>Phone</option><option>Line</option>
@@ -578,19 +579,19 @@
           <option>Traveloka</option><option>Airbnb</option><option>Other</option>
         </select>
       </div>
-      <div class="fgrp"><label>Guests</label><input type="number" id="f-guests" value="1" min="1"></div>
-      <div class="fgrp"><label>Rate / Night (฿)</label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
-      <div class="fgrp"><label>Payment Method</label>
+      <div class="fgrp"><label><span data-key="guests">Guests</span></label><input type="number" id="f-guests" value="1" min="1"></div>
+      <div class="fgrp"><label><span data-key="ratenight">Rate / Night (฿)</span></label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
+      <div class="fgrp"><label><span data-key="payment">Payment Method</span></label>
         <select id="f-payment">
           <option value="">— Select —</option>
           <option>Cash</option><option>Credit Card</option><option>Bank Transfer</option>
           <option>OTA (Prepaid)</option><option>Other</option>
         </select>
       </div>
-      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-breakfast"><span>🍳 Include Breakfast</span></div></label></div>
-      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow" id="extraBedRow"><input type="checkbox" id="f-extrabed"><span>🛏️ Extra Bed (charged)</span></div></label></div>
-      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-pet"><span>🐾 Pet Friendly Room</span></div></label></div>
-      <div class="fgrp full"><label>Remark / Notes</label><textarea id="f-remark" placeholder="Special requests, notes..."></textarea></div>
+      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-breakfast"><span data-key="breakfast">🍳 Include Breakfast</span></div></label></div>
+      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow" id="extraBedRow"><input type="checkbox" id="f-extrabed"><span data-key="extrabed">🛏️ Extra Bed (charged)</span></div></label></div>
+      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-pet"><span data-key="pet">🐾 Pet Friendly Room</span></div></label></div>
+      <div class="fgrp full"><label><span data-key="remark">Remark / Notes</span></label><textarea id="f-remark" placeholder="Special requests, notes..."></textarea></div>
     </div>
     <div id="extraBedNote" style="display:none;margin-top:12px;padding:10px;background:#fff8e1;border-radius:8px;font-size:0.82rem;color:#e65100"></div>
     <div id="formError" style="display:none;margin-top:12px;padding:10px;background:#fce4ec;border-radius:8px;font-size:0.82rem;color:#c62828"></div>
@@ -750,6 +751,60 @@
 </div>
 
 <script>
+// ===================== LANGUAGE (must be first) =====================
+let currentLang = localStorage.getItem('barnLang')||'en';
+const LANG = {
+  en: {
+    dashboard:'Dashboard', newbooking:'New Booking', reservations:'Reservations',
+    floorplan:'Floor Plan', roomgrid:'Room Grid', report:'Report',
+    available:'Available', checkedin:'Checked-In', reserved:'Reserved',
+    arrivals:'Arrivals Today', departures:'Departures Today', totalrooms:'Total Rooms',
+    roomoverview:'🏘️ Room Status Overview',
+    guestname:'Guest Name', telephone:'Telephone', checkin:'Check-In Date',
+    checkout:'Check-Out Date', room:'Room', source:'Booking Source',
+    guests:'Guests', ratenight:'Rate / Night (฿)', payment:'Payment Method',
+    breakfast:'Include Breakfast', extrabed:'Extra Bed (charged)', pet:'Pet Friendly Room',
+    remark:'Remark / Notes', confirm:'Confirm Reservation', clear:'Clear',
+    allres:'All Reservations', active:'Active', cancelled:'Cancelled',
+    search:'Search guest, room...', allstatus:'All Status', allrooms:'All Rooms',
+    nights:'Nights', checkinbtn:'Check-In', checkoutbtn:'Check-Out',
+    edit:'Edit', cancel:'Cancel',
+    loginTitle:'Staff Login — Please sign in to continue',
+    loginName:'Your name', loginShift:'— Select Shift —', loginPass:'Password',
+    signin:'Sign In', signout:'Sign out?',
+    morning:'Morning (06:00–14:00)', afternoon:'Afternoon (14:00–22:00)', night:'Night (22:00–06:00)',
+    generate:'Generate', totalBookings:'Total Bookings', checkedOut:'Checked-Out',
+    occupancy:'Occupancy Rate', revenue:'Total Revenue', avgrate:'Avg Rate/Night',
+    nightssold:'Total Nights Sold', selectdates:'— Select dates first —',
+    selectroom:'— Select Room —', lobby:'🏛️ Lobby / Reception',
+  },
+  th: {
+    dashboard:'หน้าหลัก', newbooking:'จองห้อง', reservations:'การจอง',
+    floorplan:'ผังห้อง', roomgrid:'ตารางห้อง', report:'รายงาน',
+    available:'ว่าง', checkedin:'เช็คอินแล้ว', reserved:'จองแล้ว',
+    arrivals:'เช็คอินวันนี้', departures:'เช็คเอาต์วันนี้', totalrooms:'ห้องทั้งหมด',
+    roomoverview:'🏘️ สถานะห้องพัก',
+    guestname:'ชื่อแขก', telephone:'เบอร์โทร', checkin:'วันเช็คอิน',
+    checkout:'วันเช็คเอาต์', room:'ห้อง', source:'ช่องทางการจอง',
+    guests:'จำนวนแขก', ratenight:'ราคา / คืน (฿)', payment:'วิธีชำระเงิน',
+    breakfast:'รวมอาหารเช้า', extrabed:'เตียงเสริม (มีค่าใช้จ่าย)', pet:'อนุญาตสัตว์เลี้ยง',
+    remark:'หมายเหตุ', confirm:'ยืนยันการจอง', clear:'ล้างข้อมูล',
+    allres:'การจองทั้งหมด', active:'ใช้งาน', cancelled:'ยกเลิก',
+    search:'ค้นหาแขก, ห้อง...', allstatus:'สถานะทั้งหมด', allrooms:'ห้องทั้งหมด',
+    nights:'คืน', checkinbtn:'เช็คอิน', checkoutbtn:'เช็คเอาต์',
+    edit:'แก้ไข', cancel:'ยกเลิก',
+    loginTitle:'เข้าสู่ระบบ — กรุณาล็อกอิน',
+    loginName:'ชื่อของคุณ', loginShift:'— เลือกกะ —', loginPass:'รหัสผ่าน',
+    signin:'เข้าสู่ระบบ', signout:'ออกจากระบบ?',
+    morning:'เช้า (06:00–14:00)', afternoon:'บ่าย (14:00–22:00)', night:'กลางคืน (22:00–06:00)',
+    generate:'สร้างรายงาน', totalBookings:'การจองทั้งหมด', checkedOut:'เช็คเอาต์แล้ว',
+    occupancy:'อัตราการเข้าพัก', revenue:'รายได้รวม', avgrate:'ราคาเฉลี่ย/คืน',
+    nightssold:'คืนที่ขายได้', selectdates:'— เลือกวันก่อน —',
+    selectroom:'— เลือกห้อง —', lobby:'🏛️ ล็อบบี้ / แผนกต้อนรับ',
+  }
+};
+function t(key){ return (LANG[currentLang]&&LANG[currentLang][key]) || LANG['en'][key] || key; }
+
 const ROOMS=[
   {num:'102',type:'Deluxe King',maxGuest:2,extraBed:true},
   {num:'103',type:'Deluxe King',maxGuest:2,extraBed:true},
@@ -857,19 +912,35 @@ function loadFromSheets(){
   });
 }
 function today(){return new Date().toISOString().split('T')[0]}
-function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return day+'/'+m+'/'+y}
-function nights(ci,co){if(!ci||!co)return 0;return Math.max(0,Math.round((new Date(co)-new Date(ci))/86400000))}
+function fmtDate(d){
+  if(!d) return '—';
+  // Handle full ISO timestamp like 2026-05-21T17:00:00.000Z
+  const clean = String(d).split('T')[0];
+  const parts = clean.split('-');
+  if(parts.length !== 3) return d;
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+function nights(ci,co){
+  if(!ci||!co) return 0;
+  const a = new Date(String(ci).split('T')[0]);
+  const b = new Date(String(co).split('T')[0]);
+  return Math.max(0,Math.round((b-a)/86400000));
+}
 
 function getRoomStatus(n){
-  const t=today();
-  const a=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin<=t&&r.checkout>t);
+  const tod=today();
+  const a=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin<=tod&&r.checkout>tod);
   if(a)return a.status==='Checked-In'?'occupied':'reserved';
-  const f=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin>t);
+  const f=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin>tod);
   return f?'reserved':'available';
 }
 function getActiveRes(n){
-  const t=today();
-  return reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&((r.checkin<=t&&r.checkout>t)||r.checkin>t));
+  const tod=today();
+  return reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&((r.checkin<=tod&&r.checkout>tod)||r.checkin>tod));
+}
+function getTodayRes(n){
+  const tod=today();
+  return reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
 }
 
 function showView(v){
@@ -889,17 +960,17 @@ function showView(v){
 }
 
 function renderDash(){
-  const t=today();let av=0,oc=0,rs=0;
+  const tod=today();let av=0,oc=0,rs=0;
   ROOMS.forEach(r=>{const s=getRoomStatus(r.num);if(s==='available')av++;else if(s==='occupied')oc++;else rs++});
-  const ci=reservations.filter(r=>r.checkin===t&&r.status==='Reserved').length;
-  const co=reservations.filter(r=>r.checkout===t&&r.status==='Checked-In').length;
+  const ci=reservations.filter(r=>r.checkin===tod&&r.status==='Reserved').length;
+  const co=reservations.filter(r=>r.checkout===tod&&r.status==='Checked-In').length;
   document.getElementById('statsGrid').innerHTML=
-    '<div class="stat-card available"><div class="stat-num">'+av+'</div><div class="stat-lbl">Available</div></div>'+
-    '<div class="stat-card occupied"><div class="stat-num">'+oc+'</div><div class="stat-lbl">Checked-In</div></div>'+
-    '<div class="stat-card reserved"><div class="stat-num">'+rs+'</div><div class="stat-lbl">Reserved</div></div>'+
-    '<div class="stat-card"><div class="stat-num" style="color:var(--available)">'+ci+'</div><div class="stat-lbl">Arrivals Today</div></div>'+
-    '<div class="stat-card"><div class="stat-num" style="color:var(--occupied)">'+co+'</div><div class="stat-lbl">Departures Today</div></div>'+
-    '<div class="stat-card"><div class="stat-num">'+ROOMS.length+'</div><div class="stat-lbl">Total Rooms</div></div>';
+    '<div class="stat-card available"><div class="stat-num">'+av+'</div><div class="stat-lbl">'+t('available')+'</div></div>'+
+    '<div class="stat-card occupied"><div class="stat-num">'+oc+'</div><div class="stat-lbl">'+t('checkedin')+'</div></div>'+
+    '<div class="stat-card reserved"><div class="stat-num">'+rs+'</div><div class="stat-lbl">'+t('reserved')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--available)">'+ci+'</div><div class="stat-lbl">'+t('arrivals')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--occupied)">'+co+'</div><div class="stat-lbl">'+t('departures')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+ROOMS.length+'</div><div class="stat-lbl">'+t('totalrooms')+'</div></div>';
   let h='';
   CATS.forEach(cat=>{
     h+='<div class="cat-block"><div class="cat-lbl">'+cat.label+'</div><div class="rooms-row">';
@@ -1145,10 +1216,10 @@ function renderRes(){
       '</div>'+
       (resTab==='active'?
       '<div class="res-actions">'+
-        (r.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+r.id+'\')">Check-In</button>':'')+
-        (r.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+r.id+'\')">Check-Out</button>':'')+
-        '<button class="btn btn-sm btn-outline" onclick="editRes(\''+r.id+'\')">Edit</button>'+
-        '<button class="btn btn-sm btn-danger" onclick="cancelRes(\''+r.id+'\')">Cancel</button>'+
+        (r.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+r.id+'\')">'+t('checkinbtn')+'</button>':'')+
+        (r.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+r.id+'\')">'+t('checkoutbtn')+'</button>':'')+
+        '<button class="btn btn-sm btn-outline" onclick="editRes(\''+r.id+'\')">'+t('edit')+'</button>'+
+        '<button class="btn btn-sm btn-danger" onclick="cancelRes(\''+r.id+'\')">'+t('cancel')+'</button>'+
       '</div>':'')+
       '</div>';
   }).join('');
@@ -1218,16 +1289,6 @@ const FP_ROOMS_MAP = {
   '102': { x: 210, y: 500, w: 120, h: 36 },
   '101': { x: 210, y: 539, w: 120, h: 36 },
 };
-
-function getTodayRes(n){
-  // Floor plan: only show guests currently IN the resort today
-  const t=today();
-  return reservations.find(r=>
-    r.room===n &&
-    r.status==='Checked-In' &&
-    r.checkin<=t && r.checkout>t
-  );
-}
 
 function renderFloorPlan() {
   const cont = document.getElementById('fpRooms');
@@ -1423,7 +1484,7 @@ function doLogin(){
   document.getElementById('loginOverlay').style.display='none';
   document.getElementById('staffBadge').style.display='flex';
   document.getElementById('staffName').textContent = name;
-  document.getElementById('staffShift').textContent = shift.split(' ')[0];
+  document.getElementById('staffShift').textContent = shift==='Admin' ? 'Admin' : shift.split(' ')[0];
 }
 
 function doLogout(){
@@ -1443,22 +1504,52 @@ function checkLogin(){
     document.getElementById('loginOverlay').style.display='none';
     document.getElementById('staffBadge').style.display='flex';
     document.getElementById('staffName').textContent = currentStaff.name;
-    document.getElementById('staffShift').textContent = currentStaff.shift.split(' ')[0];
+    document.getElementById('staffShift').textContent = currentStaff.shift==='Admin' ? 'Admin' : currentStaff.shift.split(' ')[0];
+  } else {
+    document.getElementById('loginOverlay').style.display='flex';
+    document.getElementById('staffBadge').style.display='none';
   }
 }
-
-// ===================== LANGUAGE =====================
-let currentLang = localStorage.getItem('barnLang')||'en';
 
 function setLang(lang){
   currentLang = lang;
   localStorage.setItem('barnLang', lang);
+  // Toggle buttons
   document.querySelectorAll('.lang-btn').forEach(b=>{
     b.classList.toggle('active', b.textContent.trim()===(lang==='en'?'EN':'ไทย'));
   });
-  document.querySelectorAll('.t[data-'+lang+']').forEach(el=>{
-    el.textContent = el.getAttribute('data-'+lang);
+  // Update all static .t elements
+  document.querySelectorAll('[data-key]').forEach(el=>{
+    el.textContent = t(el.getAttribute('data-key'));
   });
+  // Re-render current view to apply translations
+  const activeView = document.querySelector('.view.active');
+  if(activeView){
+    const v = activeView.id.replace('view-','');
+    if(v==='dashboard') renderDash();
+    if(v==='reservations') renderRes();
+    if(v==='booking') applyFormLang();
+    if(v==='report') renderReport();
+  }
+  applyFormLang();
+  applyLoginLang();
+}
+
+function applyFormLang(){
+  const el = (id,key) => { const e=document.getElementById(id); if(e) e.placeholder=t(key); };
+  el('f-guest','guestname'); el('f-phone','telephone'); el('f-remark','remark');
+  el('filterSearch','search');
+  const sel = document.getElementById('f-room');
+  if(sel && sel.options[0]) sel.options[0].text = t('selectroom');
+}
+
+function applyLoginLang(){
+  const el=(id,key)=>{ const e=document.getElementById(id); if(e) e.placeholder=t(key); };
+  el('loginName','loginName'); el('loginPass','loginPass');
+  const sub = document.querySelector('.login-sub');
+  if(sub) sub.textContent = t('loginTitle');
+  const btn = document.querySelector('.login-box .btn');
+  if(btn) btn.textContent = t('signin');
 }
 
 // ===================== REPORT =====================
@@ -1497,12 +1588,12 @@ function renderReport(){
   const avgRate = checkedOut.length ? Math.round(totalRevenue/totalNights||0) : 0;
 
   document.getElementById('repStats').innerHTML=`
-    <div class="report-card"><div class="report-num">${monthRes.length}</div><div class="report-lbl">Total Bookings</div></div>
-    <div class="report-card"><div class="report-num">${checkedOut.length}</div><div class="report-lbl">Checked-Out</div></div>
-    <div class="report-card"><div class="report-num">${occupancyRate}%</div><div class="report-lbl">Occupancy Rate</div></div>
-    <div class="report-card"><div class="report-num">฿${totalRevenue.toLocaleString()}</div><div class="report-lbl">Total Revenue</div></div>
-    <div class="report-card"><div class="report-num">฿${avgRate.toLocaleString()}</div><div class="report-lbl">Avg Rate/Night</div></div>
-    <div class="report-card"><div class="report-num">${totalNights}</div><div class="report-lbl">Total Nights Sold</div></div>
+    <div class="report-card"><div class="report-num">${monthRes.length}</div><div class="report-lbl">${t('totalBookings')}</div></div>
+    <div class="report-card"><div class="report-num">${checkedOut.length}</div><div class="report-lbl">${t('checkedOut')}</div></div>
+    <div class="report-card"><div class="report-num">${occupancyRate}%</div><div class="report-lbl">${t('occupancy')}</div></div>
+    <div class="report-card"><div class="report-num">฿${totalRevenue.toLocaleString()}</div><div class="report-lbl">${t('revenue')}</div></div>
+    <div class="report-card"><div class="report-num">฿${avgRate.toLocaleString()}</div><div class="report-lbl">${t('avgrate')}</div></div>
+    <div class="report-card"><div class="report-num">${totalNights}</div><div class="report-lbl">${t('nightssold')}</div></div>
   `;
 
   if(!monthRes.length){

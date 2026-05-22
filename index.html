@@ -690,47 +690,64 @@ function save(){
 function syncToSheets(){
   const indicator = document.getElementById('syncIndicator');
   if(indicator){ indicator.textContent='☁️ Saving...'; indicator.style.color='var(--blue-lt)'; }
+  
   const payload = JSON.stringify({ action:'save', reservations });
-  fetch(GS_URL, {
-    method:'POST',
-    mode:'no-cors',
-    cache:'no-cache',
-    headers:{'Content-Type':'text/plain'},
-    body: payload
-  }).then(()=>{
+
+  // Use XMLHttpRequest which handles CORS better than fetch for Apps Script
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', GS_URL, true);
+  xhr.setRequestHeader('Content-Type', 'text/plain');
+  xhr.onload = function(){
     if(indicator){
       indicator.textContent='✅ Saved to Sheet';
       indicator.style.color='#6ee7b7';
-      setTimeout(()=>{ indicator.textContent='☁️ Synced'; },3000);
+      setTimeout(()=>{ indicator.textContent='☁️ Synced'; }, 3000);
     }
-  }).catch(()=>{
-    if(indicator){ indicator.textContent='⚠️ Offline'; indicator.style.color='#fca5a5'; }
-  });
+  };
+  xhr.onerror = function(){
+    // Fallback: use no-cors fetch
+    fetch(GS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: payload
+    }).then(()=>{
+      if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
+    });
+  };
+  xhr.send(payload);
 }
 
 // Load from Google Sheets on startup
 function loadFromSheets(){
   const indicator = document.getElementById('syncIndicator');
   if(indicator){ indicator.textContent='☁️ Connecting...'; indicator.style.color='var(--blue-lt)'; }
+  
   fetch(GS_URL+'?action=load')
   .then(r=>r.json())
   .then(data=>{
     if(data.status==='ok' && data.rows && data.rows.length > 1){
-      const loaded = data.rows.slice(1).map(row=>({
-        id:row[0], guest:row[1], phone:row[2], room:row[3],
-        source:row[4], checkin:row[5], checkout:row[6],
-        guests:row[8], payment:row[9],
-        breakfast:row[10]==='Yes', extrabed:row[11]==='Yes',
-        pet:row[12]==='Yes', remark:row[13],
-        status:row[14], createdAt:row[15]
-      }));
+      const loaded = data.rows.slice(1)
+        .filter(row=>row[0])
+        .map(row=>({
+          id:row[0], guest:row[1], phone:row[2], room:row[3],
+          source:row[4], checkin:row[5], checkout:row[6],
+          guests:row[8], payment:row[9],
+          breakfast:row[10]==='Yes', extrabed:row[11]==='Yes',
+          pet:row[12]==='Yes', remark:row[13],
+          status:row[14], createdAt:row[15]
+        }));
       if(loaded.length > 0){
         reservations = loaded;
         localStorage.setItem('barnReservations',JSON.stringify(reservations));
         renderDash();
+        if(indicator){ indicator.textContent='☁️ Loaded '+loaded.length+' bookings'; indicator.style.color='#6ee7b7'; }
+      } else {
+        if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
       }
+    } else {
+      if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
     }
-    if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
   }).catch(()=>{
     if(indicator){ indicator.textContent='📱 Local Only'; indicator.style.color='#fca5a5'; }
   });

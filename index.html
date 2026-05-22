@@ -963,7 +963,7 @@ function showView(v){
     renderFloorPlan();
   }
   if(v==='report')renderReport();
-  if(v==='roomgrid')renderRoomGrid();
+  if(v==='roomgrid') setTimeout(renderRoomGrid, 30);
 }
 
 function renderDash(){
@@ -1393,12 +1393,15 @@ function renderRoomGrid(){
 
   // Build reservation lookup: for each room, list of reservations this month
   function getRoomResForMonth(roomNum){
-    return reservations.filter(r =>
-      r.room === roomNum &&
-      r.status !== 'Cancelled' &&
-      r.checkin < rgYear+'-'+String(rgMonth+2).padStart(2,'0')+'-01' &&
-      r.checkout > rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-01'
-    );
+    const monthStart = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-01';
+    const monthEnd   = rgYear+'-'+String(rgMonth+2 > 12 ? 1 : rgMonth+2).padStart(2,'0')+'-01';
+    return reservations.filter(r => {
+      if(r.room !== roomNum) return false;
+      if(r.status === 'Cancelled') return false;
+      const ci = String(r.checkin).split('T')[0];
+      const co = String(r.checkout).split('T')[0];
+      return ci < monthEnd && co > monthStart;
+    });
   }
 
   // Build table
@@ -1421,23 +1424,24 @@ function renderRoomGrid(){
       const roomRes = getRoomResForMonth(roomNum);
 
       // Build cell data for each day
-      const cellData = {}; // d -> {status, res, spanStart, spanLen}
+      const cellData = {};
       roomRes.forEach(res => {
+        const ci = String(res.checkin).split('T')[0];
+        const co = String(res.checkout).split('T')[0];
         for(let d=1; d<=daysInMonth; d++){
           const ds = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-          if(ds >= res.checkin && ds < res.checkout){
-            const isFirst = ds === res.checkin;
-            const isLast = new Date(rgYear,rgMonth,d+1).toISOString().split('T')[0] >= res.checkout;
+          if(ds >= ci && ds < co){
+            const isFirst = ds === ci;
+            const nextDs = new Date(rgYear,rgMonth,d+1).toISOString().split('T')[0];
+            const isLast = nextDs >= co;
             cellData[d] = { res, isFirst, isLast,
               status: res.status==='Checked-In' ? 'occ' : 'res' };
           }
-          if(ds === res.checkin) cellData[d] = {...(cellData[d]||{}), res, isFirst:true, status: res.status==='Checked-In'?'occ':'res' };
-          // checkout day highlight
         }
         // Mark checkout day
-        const [cy,cm,cd] = res.checkout.split('-');
-        if(parseInt(cy)===rgYear && parseInt(cm)-1===rgMonth){
-          const dd = parseInt(cd);
+        const coClean = co.split('-');
+        if(parseInt(coClean[0])===rgYear && parseInt(coClean[1])-1===rgMonth){
+          const dd = parseInt(coClean[2]);
           if(dd>=1 && dd<=daysInMonth){
             if(!cellData[dd]) cellData[dd] = { res, isFirst:false, isLast:true, status:'chkout' };
             else cellData[dd].isLast = true;

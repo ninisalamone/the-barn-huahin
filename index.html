@@ -679,7 +679,7 @@ const CATS=[
 let reservations=JSON.parse(localStorage.getItem('barnReservations')||'[]');
 let editingId=null;
 
-const GS_URL='https://script.google.com/macros/s/AKfycbxbtDqRbwTGMeyfyV5Sbswa8EqybXSYeAvFF8gxn0eWHjA4IDw-ARVEv0FWZ8Tro5qu/exec';
+const GS_URL='https://script.google.com/macros/s/AKfycbygs5_umSJr4cswcmKkKaTDbvODBYBSfa27qMNg1O5JApkVMTdz5IoB0-4iex6j2Ytc/exec';
 
 // Save to both localStorage AND Google Sheets
 function save(){
@@ -690,14 +690,19 @@ function save(){
 function syncToSheets(){
   const indicator = document.getElementById('syncIndicator');
   if(indicator){ indicator.textContent='☁️ Saving...'; indicator.style.color='var(--blue-lt)'; }
+  const payload = JSON.stringify({ action:'save', reservations });
   fetch(GS_URL, {
     method:'POST',
     mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ action:'save', reservations })
+    cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body: payload
   }).then(()=>{
-    if(indicator){ indicator.textContent='✅ Saved'; indicator.style.color='#6ee7b7';
-      setTimeout(()=>{ indicator.textContent='☁️ Synced'; },2000); }
+    if(indicator){
+      indicator.textContent='✅ Saved to Sheet';
+      indicator.style.color='#6ee7b7';
+      setTimeout(()=>{ indicator.textContent='☁️ Synced'; },3000);
+    }
   }).catch(()=>{
     if(indicator){ indicator.textContent='⚠️ Offline'; indicator.style.color='#fca5a5'; }
   });
@@ -706,13 +711,28 @@ function syncToSheets(){
 // Load from Google Sheets on startup
 function loadFromSheets(){
   const indicator = document.getElementById('syncIndicator');
-  if(indicator){ indicator.textContent='☁️ Loading...'; indicator.style.color='var(--blue-lt)'; }
-  fetch(GS_URL+'?action=load', { method:'GET', mode:'no-cors' })
-  .then(()=>{
-    // no-cors means we can't read response — use localStorage as fallback
+  if(indicator){ indicator.textContent='☁️ Connecting...'; indicator.style.color='var(--blue-lt)'; }
+  fetch(GS_URL+'?action=load')
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.status==='ok' && data.rows && data.rows.length > 1){
+      const loaded = data.rows.slice(1).map(row=>({
+        id:row[0], guest:row[1], phone:row[2], room:row[3],
+        source:row[4], checkin:row[5], checkout:row[6],
+        guests:row[8], payment:row[9],
+        breakfast:row[10]==='Yes', extrabed:row[11]==='Yes',
+        pet:row[12]==='Yes', remark:row[13],
+        status:row[14], createdAt:row[15]
+      }));
+      if(loaded.length > 0){
+        reservations = loaded;
+        localStorage.setItem('barnReservations',JSON.stringify(reservations));
+        renderDash();
+      }
+    }
     if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
   }).catch(()=>{
-    if(indicator){ indicator.textContent='⚠️ Offline — Local Data'; indicator.style.color='#fca5a5'; }
+    if(indicator){ indicator.textContent='📱 Local Only'; indicator.style.color='#fca5a5'; }
   });
 }
 function today(){return new Date().toISOString().split('T')[0]}

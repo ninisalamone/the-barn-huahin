@@ -895,7 +895,7 @@ function loadFromSheets(){
       const loaded = data.rows.slice(1)
         .filter(row=>row[0])
         .map(row=>({
-          id:row[0], guest:row[1], phone:row[2], room:row[3],
+          id:row[0], guest:row[1], phone:row[2], room:String(row[3]),
           source:row[4],
           checkin:String(row[5]).split('T')[0],
           checkout:String(row[6]).split('T')[0],
@@ -903,7 +903,8 @@ function loadFromSheets(){
           breakfast:row[11]==='Yes', extrabed:row[12]==='Yes',
           pet:row[13]==='Yes', remark:row[14]||'',
           status:row[15]||'Reserved', createdAt:row[16]||''
-        }));
+        }))
+        .filter((r,i,arr)=>arr.findIndex(x=>x.id===r.id)===i); // remove duplicates
       if(loaded.length > 0){
         reservations = loaded;
         localStorage.setItem('barnReservations',JSON.stringify(reservations));
@@ -947,14 +948,20 @@ function nights(ci,co){
 
 function getRoomStatus(n){
   const tod=today();
-  const a=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin<=tod&&r.checkout>tod);
-  if(a)return a.status==='Checked-In'?'occupied':'reserved';
-  const f=reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&r.checkin>tod);
-  return f?'reserved':'available';
+  // Currently checked in
+  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
+  if(a) return 'occupied';
+  // Reserved and should be here today (checkin is today or already past but not checked in yet)
+  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&r.checkin<=tod&&r.checkout>tod);
+  if(b) return 'reserved';
+  // Available — future bookings don't affect today's status
+  return 'available';
 }
 function getActiveRes(n){
   const tod=today();
-  return reservations.find(r=>r.room===n&&r.status!=='Checked-Out'&&r.status!=='Cancelled'&&((r.checkin<=tod&&r.checkout>tod)||r.checkin>tod));
+  return reservations.find(r=>r.room===n&&
+    (r.status==='Checked-In'||r.status==='Reserved')&&
+    r.checkin<=tod&&r.checkout>tod);
 }
 function getTodayRes(n){
   const tod=today();
@@ -981,7 +988,7 @@ function showView(v){
 function renderDash(){
   const tod=today();let av=0,oc=0,rs=0;
   ROOMS.forEach(r=>{const s=getRoomStatus(r.num);if(s==='available')av++;else if(s==='occupied')oc++;else rs++});
-  const ci=reservations.filter(r=>r.checkin===tod&&r.status==='Reserved').length;
+  const ci=reservations.filter(r=>r.checkin===tod&&(r.status==='Reserved'||r.status==='Checked-In')).length;
   const co=reservations.filter(r=>r.checkout===tod&&r.status==='Checked-In').length;
   document.getElementById('statsGrid').innerHTML=
     '<div class="stat-card available"><div class="stat-num">'+av+'</div><div class="stat-lbl">'+t('available')+'</div></div>'+

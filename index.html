@@ -877,7 +877,7 @@ function populateRoomSel(){
   const hasDates = ci && co && ci < co;
 
   sel.innerHTML = hasDates
-    ? '<option value="">— Select Available Room —</option>'
+    ? '<option value="">— Select Room —</option>'
     : '<option value="">— Select dates first —</option>';
 
   let availCount = 0;
@@ -907,7 +907,7 @@ function populateRoomSel(){
     errEl.style.display='block';
     errEl.style.background='#e0f2fe';
     errEl.style.color='#0369a1';
-    errEl.textContent = '✓ '+availCount+' rooms available for '+fmtDate(ci)+' → '+fmtDate(co)+' — unavailable rooms are blocked';
+    errEl.textContent = '✓ '+availCount+' rooms open for '+fmtDate(ci)+' → '+fmtDate(co)+' — booked rooms are blocked';
   } else {
     errEl.style.display='none';
   }

@@ -314,6 +314,59 @@
 
   /* Pet badge */
   .b-pet{background:#fef3c7;color:#92400e}
+  .b-rate{background:#f0fdf4;color:#166534}
+
+  /* STAFF LOGIN */
+  .login-overlay{
+    position:fixed;inset:0;background:var(--navy-dark);
+    z-index:999;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:0;
+  }
+  .login-box{
+    background:var(--white);border-radius:20px;padding:36px 32px;
+    max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    text-align:center;
+  }
+  .login-logo{font-size:3rem;margin-bottom:8px}
+  .login-title{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--navy-dark);margin-bottom:4px}
+  .login-sub{font-size:0.8rem;color:var(--gray);margin-bottom:24px}
+  .login-box input, .login-box select{margin-bottom:12px;background:#f7f9fc}
+  .login-box .btn{width:100%;margin-top:8px}
+  .login-err{color:#dc2626;font-size:0.8rem;margin-top:6px;display:none}
+  .staff-badge{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,0.1);border-radius:20px;
+    padding:4px 12px;font-size:0.75rem;color:#fff;cursor:pointer;
+  }
+  .staff-badge:hover{background:rgba(255,255,255,0.2)}
+
+  /* LANGUAGE TOGGLE */
+  .lang-toggle{
+    display:flex;gap:2px;background:rgba(255,255,255,0.1);
+    border-radius:20px;padding:3px;
+  }
+  .lang-btn{
+    background:transparent;border:none;color:#fff;
+    padding:3px 10px;border-radius:16px;font-size:0.72rem;
+    cursor:pointer;font-weight:500;transition:all .2s;
+  }
+  .lang-btn.active{background:var(--blue);font-weight:700}
+
+  /* REPORT */
+  #view-report{padding:20px;max-width:1200px;margin:0 auto}
+  .report-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+  .report-controls select, .report-controls input{min-width:140px;max-width:180px}
+  .report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+  .report-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;box-shadow:0 2px 8px var(--shadow)}
+  .report-num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--navy)}
+  .report-lbl{font-size:0.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+  .report-table{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px var(--shadow)}
+  .report-table table{width:100%;border-collapse:collapse;font-size:0.82rem}
+  .report-table th{background:var(--navy-dark);color:#fff;padding:10px 14px;text-align:left;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.8px}
+  .report-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+  .report-table tr:last-child td{border-bottom:none}
+  .report-table tr:hover td{background:#f7f9fc}
+  .report-total td{font-weight:700;background:#f0f5fc!important;color:var(--navy)}
 
   /* ROOM GRID / AVAILABILITY CALENDAR */
   #view-roomgrid { padding:20px; max-width:100%; margin:0 auto; }
@@ -449,6 +502,25 @@
 </head>
 <body>
 
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🏡</div>
+    <div class="login-title">The Barn Hua Hin</div>
+    <div class="login-sub">Staff Login — Please sign in to continue</div>
+    <input type="text" id="loginName" placeholder="Your name *">
+    <select id="loginShift">
+      <option value="">— Select Shift —</option>
+      <option>Morning (06:00–14:00)</option>
+      <option>Afternoon (14:00–22:00)</option>
+      <option>Night (22:00–06:00)</option>
+    </select>
+    <input type="password" id="loginPass" placeholder="Password *" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">❌ Incorrect password. Please try again.</div>
+  </div>
+</div>
+
 <div class="header">
   <div class="hbrand">
     <img src="data:image/webp;base64,UklGRqICAABXRUJQVlA4IJYCAAAQDgCdASplAFAAPp1On0ulpKKhpJmaaLATiWkADPcRnVkZ3DzI4se9Mjq9ADO9qF9KT9mfQzJdIKcxH9hIeaDrOGyWp3xMLzwVaQTo5namD/r/2BKrgLWe7cZUsQZIW2nUamMaF/zpoQv8mqtxL5r2ZRzzUWCoRGwAAP76AoafEbWANXNK44BieLR+4K945NW1HxK+0YTtHNSfyZC3WGCI1adAmz6cWDP5gNPaVSzu9NE0zbK8hs9i7XXD2PKsbVPkUv+WQBLJYFPdQERFNgnPhzMgqev4pL9meQHp68JVX8xzJ6NUQVW4vu5cWdPC7rrSl9ka0WeN3VlKRv4v2CRhP2Z45AKB2ZHRStadgcUG4jXA2tfLd7i4RhDSqFIhtg3c8TRenDJ+i9EpiHxppQV8eIlB6WC8Rfrwy+YcySaO1w4wUceTs0XjP24ZTMeYL3zq9ipQCAtqzwLMkh7QeHZ7bCFOoqVpQg8IEz3H106qPIyMeoipy2GrwtSv52kC/j1hCszqgzPkjw4Ob1WMyLxyiJxOIvfniUhetHgWt942ap6ZnN5LXEQe9Ohe1czFDPJu992Uu8PDZQ6TZAbn3xg0vSmfvDFxujb8VlmS3hj7KjUIhIG5AMpILb1INKBUFkx7dJ/S7Wo45xbGI1IfjotAB9oVEKsVH5Fw/ZhVMvD+jePltaAeKJcib0nM+j3o3FF4Vr4VO0XuJ1kYoK0tpEMSiUBxaeP2tPJ9WOUWFTqjpz3paeChThhImtQKYv7y5NsC0b7Zcs0lE7Q+JsnAYQR6Dk/Y9lmnE6+X3fMZXd/ln+OpYO1oaya7mBsO0iXIbHBCHKOoXN80D/iUKRhLhMB9ZGIpGmBSRiPxv6Bqkpuozb7UMcCgAA==" alt="The Barn Hua Hin">
@@ -458,14 +530,22 @@
     </div>
   </div>
   <div class="hnav">
-    <button class="nav-btn active" onclick="showView('dashboard')">🏠 Dashboard</button>
-    <button class="nav-btn" onclick="showView('booking')">➕ New Booking</button>
-    <button class="nav-btn" onclick="showView('reservations')">📋 Reservations</button>
-    <button class="nav-btn" onclick="showView('floorplan')">🗺️ Floor Plan</button>
-    <button class="nav-btn" onclick="showView('roomgrid')">📅 Room Grid</button>
+    <button class="nav-btn active" onclick="showView('dashboard')">🏠 <span class="t" data-en="Dashboard" data-th="หน้าหลัก">Dashboard</span></button>
+    <button class="nav-btn" onclick="showView('booking')">➕ <span class="t" data-en="New Booking" data-th="จองห้อง">New Booking</span></button>
+    <button class="nav-btn" onclick="showView('reservations')">📋 <span class="t" data-en="Reservations" data-th="การจอง">Reservations</span></button>
+    <button class="nav-btn" onclick="showView('floorplan')">🗺️ <span class="t" data-en="Floor Plan" data-th="ผังห้อง">Floor Plan</span></button>
+    <button class="nav-btn" onclick="showView('roomgrid')">📅 <span class="t" data-en="Room Grid" data-th="ตารางห้อง">Room Grid</span></button>
+    <button class="nav-btn" onclick="showView('report')">📊 <span class="t" data-en="Report" data-th="รายงาน">Report</span></button>
   </div>
-  <div class="tbadge" id="todayBadge"></div>
-  <div class="tbadge" id="syncIndicator" style="font-size:0.7rem;padding:4px 10px;background:rgba(255,255,255,0.08);border-radius:20px;">☁️ Synced</div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0">
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('th')">ไทย</button>
+    </div>
+    <div class="tbadge" id="todayBadge"></div>
+    <div class="tbadge" id="syncIndicator" style="font-size:0.7rem;padding:4px 10px;background:rgba(255,255,255,0.08);border-radius:20px;">☁️ Synced</div>
+    <div class="staff-badge" onclick="doLogout()" title="Click to logout" id="staffBadge" style="display:none">👤 <span id="staffName"></span> · <span id="staffShift"></span></div>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -499,6 +579,7 @@
         </select>
       </div>
       <div class="fgrp"><label>Guests</label><input type="number" id="f-guests" value="1" min="1"></div>
+      <div class="fgrp"><label>Rate / Night (฿)</label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
       <div class="fgrp"><label>Payment Method</label>
         <select id="f-payment">
           <option value="">— Select —</option>
@@ -522,7 +603,11 @@
 
 <!-- RESERVATIONS -->
 <div id="view-reservations" class="view">
-  <div class="sec-title">📋 All Reservations</div>
+  <div class="sec-title">📋 <span class="t" data-en="All Reservations" data-th="การจองทั้งหมด">All Reservations</span></div>
+  <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
+    <button class="res-tab active" onclick="setResTab('active')" id="tab-active" style="background:none;border:none;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;color:var(--blue);border-bottom:2px solid var(--blue);margin-bottom:-2px;cursor:pointer">Active</button>
+    <button class="res-tab" onclick="setResTab('cancelled')" id="tab-cancelled" style="background:none;border:none;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer">Cancelled</button>
+  </div>
   <div class="filter-bar">
     <input type="text" id="filterSearch" placeholder="Search guest, room..." oninput="renderRes()">
     <select id="filterStatus" onchange="renderRes()">
@@ -624,6 +709,25 @@
   <div class="rg-scroll">
     <table class="rg-table" id="rgTable"></table>
   </div>
+</div>
+
+<!-- REPORT -->
+<div id="view-report" class="view">
+  <div class="sec-title">📊 <span class="t" data-en="Report" data-th="รายงาน">Report</span></div>
+  <div class="report-controls">
+    <select id="repMonth">
+      <option value="0">January</option><option value="1">February</option>
+      <option value="2">March</option><option value="3">April</option>
+      <option value="4">May</option><option value="5">June</option>
+      <option value="6">July</option><option value="7">August</option>
+      <option value="8">September</option><option value="9">October</option>
+      <option value="10">November</option><option value="11">December</option>
+    </select>
+    <select id="repYear" onchange="renderReport()"></select>
+    <button class="btn btn-primary btn-sm" onclick="renderReport()">Generate</button>
+  </div>
+  <div class="report-grid" id="repStats"></div>
+  <div class="report-table" id="repTable"></div>
 </div>
 
 <!-- ROOM MODAL -->
@@ -781,7 +885,7 @@ function showView(v){
     if(lbl) lbl.textContent = '— As of today: '+new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
     renderFloorPlan();
   }
-  if(v==='roomgrid')renderRoomGrid();
+  if(v==='report')renderReport();
 }
 
 function renderDash(){
@@ -803,11 +907,15 @@ function renderDash(){
       const st=getRoomStatus(r.num),res=getActiveRes(r.num);
       let tip='';
       if(res){
+        const n=nights(res.checkin,res.checkout);
+        const rate=parseFloat(res.rate)||0;
         tip='<div class="tooltip">'+
           '<div class="tt-line"><span class="tt-key">Guest</span><span class="tt-val">'+res.guest+'</span></div>'+
           '<div class="tt-line"><span class="tt-key">Check-in</span><span class="tt-val">'+fmtDate(res.checkin)+'</span></div>'+
           '<div class="tt-line"><span class="tt-key">Check-out</span><span class="tt-val">'+fmtDate(res.checkout)+'</span></div>'+
-          '<div class="tt-line"><span class="tt-key">Nights</span><span class="tt-val">'+nights(res.checkin,res.checkout)+'</span></div>'+
+          '<div class="tt-line"><span class="tt-key">Nights</span><span class="tt-val">'+n+'</span></div>'+
+          (rate?'<div class="tt-line"><span class="tt-key">Rate/Night</span><span class="tt-val">฿'+rate.toLocaleString()+'</span></div>':'')+
+          (rate?'<div class="tt-line"><span class="tt-key">Total</span><span class="tt-val">฿'+(rate*n).toLocaleString()+'</span></div>':'')+
           (res.pet?'<hr class="tt-divider"><div class="tt-line"><span class="tt-key">🐾 Pet</span><span class="tt-val">Yes</span></div>':'')+
         '</div>';
       }else{
@@ -926,7 +1034,7 @@ function onRoomChange(){
 function prefillRoom(n){showView('booking');setTimeout(()=>{document.getElementById('f-room').value=n;onRoomChange()},50)}
 
 function clearForm(){
-  ['f-guest','f-phone','f-room','f-source','f-checkin','f-checkout','f-guests','f-payment','f-remark'].forEach(id=>{
+  ['f-guest','f-phone','f-room','f-source','f-checkin','f-checkout','f-guests','f-rate','f-payment','f-remark'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value=el.tagName==='SELECT'?'':(id==='f-guests'?'1':'');
   });
   document.getElementById('f-breakfast').checked=false;
@@ -951,6 +1059,7 @@ function editRes(id){
     document.getElementById('f-checkin').value=res.checkin;
     document.getElementById('f-checkout').value=res.checkout;
     document.getElementById('f-guests').value=res.guests;
+    document.getElementById('f-rate').value=res.rate||'';
     document.getElementById('f-payment').value=res.payment||'';
     document.getElementById('f-breakfast').checked=!!res.breakfast;
     document.getElementById('f-extrabed').checked=!!res.extrabed;
@@ -969,6 +1078,7 @@ function submitBooking(){
   const checkin=document.getElementById('f-checkin').value;
   const checkout=document.getElementById('f-checkout').value;
   const guests=parseInt(document.getElementById('f-guests').value)||1;
+  const rate=parseFloat(document.getElementById('f-rate').value)||0;
   const payment=document.getElementById('f-payment').value;
   const breakfast=document.getElementById('f-breakfast').checked;
   const extrabed=document.getElementById('f-extrabed').checked;
@@ -987,9 +1097,9 @@ function submitBooking(){
 
   if(editingId){
     const i=reservations.findIndex(r=>r.id===editingId);
-    reservations[i]={...reservations[i],guest,phone,room,source,checkin,checkout,guests,payment,breakfast,extrabed,pet,remark};
+    reservations[i]={...reservations[i],guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
   }else{
-    reservations.push({id:'RES'+Date.now(),guest,phone,room,source,checkin,checkout,guests,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
+    reservations.push({id:'RES'+Date.now(),guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
   }
   save();clearForm();alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
 }
@@ -1004,23 +1114,28 @@ function renderRes(){
   const srch=(document.getElementById('filterSearch')?.value||'').toLowerCase();
   const stF=document.getElementById('filterStatus')?.value||'';
   const rmF=document.getElementById('filterRoom')?.value||'';
-  let list=[...reservations].filter(r=>r.status!=='Cancelled');
+  let list=[...reservations].filter(r=> resTab==='cancelled' ? r.status==='Cancelled' : r.status!=='Cancelled');
   if(srch)list=list.filter(r=>r.guest.toLowerCase().includes(srch)||r.room.toLowerCase().includes(srch)||(r.phone&&r.phone.includes(srch)));
-  if(stF)list=list.filter(r=>r.status===stF);
+  if(stF && resTab==='active')list=list.filter(r=>r.status===stF);
   if(rmF)list=list.filter(r=>r.room===rmF);
   list.sort((a,b)=>a.checkin>b.checkin?1:-1);
   const cont=document.getElementById('resList');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="emo">📭</div><div>No reservations found</div></div>';return}
   cont.innerHTML=list.map(r=>{
-    const sc=r.status==='Checked-In'?'s-in':r.status==='Checked-Out'?'s-out':'s-res';
+    const sc=r.status==='Checked-In'?'s-in':r.status==='Checked-Out'?'s-out':r.status==='Cancelled'?'s-out':'s-res';
+    const n=nights(r.checkin,r.checkout);
+    const rate=parseFloat(r.rate)||0;
+    const total=rate*n;
     return '<div class="res-card">'+
       '<div class="res-hdr"><div><div class="res-name">'+r.guest+'</div><div style="font-size:0.78rem;color:var(--gray);margin-top:2px">'+r.phone+'</div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="room-badge">Room '+r.room+'</span><span class="stag '+sc+'">'+r.status+'</span></div></div>'+
       '<div class="res-details">'+
         '<div class="res-det"><div class="det-lbl">Check-In</div><div class="det-val">'+fmtDate(r.checkin)+'</div></div>'+
         '<div class="res-det"><div class="det-lbl">Check-Out</div><div class="det-val">'+fmtDate(r.checkout)+'</div></div>'+
-        '<div class="res-det"><div class="det-lbl">Nights</div><div class="det-val">'+nights(r.checkin,r.checkout)+'</div></div>'+
+        '<div class="res-det"><div class="det-lbl">Nights</div><div class="det-val">'+n+'</div></div>'+
         '<div class="res-det"><div class="det-lbl">Guests</div><div class="det-val">'+r.guests+'</div></div>'+
+        (rate?'<div class="res-det"><div class="det-lbl">Rate/Night</div><div class="det-val">฿'+rate.toLocaleString()+'</div></div>':'')+
+        (total?'<div class="res-det"><div class="det-lbl">Total</div><div class="det-val" style="color:var(--available);font-weight:700">฿'+total.toLocaleString()+'</div></div>':'')+
       '</div>'+
       '<div class="res-badges"><span class="badge b-src">'+r.source+'</span>'+
         (r.breakfast?'<span class="badge b-bkf">🍳 Breakfast</span>':'')+
@@ -1028,12 +1143,14 @@ function renderRes(){
         (r.pet?'<span class="badge b-pet">🐾 Pet</span>':'')+
         (r.payment?'<span class="badge b-pay">'+r.payment+'</span>':'')+
       '</div>'+
+      (resTab==='active'?
       '<div class="res-actions">'+
         (r.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+r.id+'\')">Check-In</button>':'')+
         (r.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+r.id+'\')">Check-Out</button>':'')+
         '<button class="btn btn-sm btn-outline" onclick="editRes(\''+r.id+'\')">Edit</button>'+
         '<button class="btn btn-sm btn-danger" onclick="cancelRes(\''+r.id+'\')">Cancel</button>'+
-      '</div></div>';
+      '</div>':'')+
+      '</div>';
   }).join('');
 }
 
@@ -1290,6 +1407,159 @@ function renderRoomGrid(){
   document.getElementById('rgTable').innerHTML = html;
 }
 
+// ===================== STAFF LOGIN =====================
+const STAFF_PASSWORD = 'thebarn206'; // Change this to your password
+let currentStaff = JSON.parse(sessionStorage.getItem('barnStaff')||'null');
+
+function doLogin(){
+  const name = document.getElementById('loginName').value.trim();
+  const shift = document.getElementById('loginShift').value;
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if(!name||!shift){ err.style.display='block'; err.textContent='❌ Please enter your name and select a shift.'; return; }
+  if(pass !== STAFF_PASSWORD){ err.style.display='block'; err.textContent='❌ Incorrect password. Please try again.'; return; }
+  currentStaff = {name, shift};
+  sessionStorage.setItem('barnStaff', JSON.stringify(currentStaff));
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('staffBadge').style.display='flex';
+  document.getElementById('staffName').textContent = name;
+  document.getElementById('staffShift').textContent = shift.split(' ')[0];
+}
+
+function doLogout(){
+  if(!confirm('Sign out?')) return;
+  sessionStorage.removeItem('barnStaff');
+  currentStaff = null;
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('staffBadge').style.display='none';
+  document.getElementById('loginName').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginShift').value='';
+  document.getElementById('loginErr').style.display='none';
+}
+
+function checkLogin(){
+  if(currentStaff){
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('staffBadge').style.display='flex';
+    document.getElementById('staffName').textContent = currentStaff.name;
+    document.getElementById('staffShift').textContent = currentStaff.shift.split(' ')[0];
+  }
+}
+
+// ===================== LANGUAGE =====================
+let currentLang = localStorage.getItem('barnLang')||'en';
+
+function setLang(lang){
+  currentLang = lang;
+  localStorage.setItem('barnLang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent.trim()===(lang==='en'?'EN':'ไทย'));
+  });
+  document.querySelectorAll('.t[data-'+lang+']').forEach(el=>{
+    el.textContent = el.getAttribute('data-'+lang);
+  });
+}
+
+// ===================== REPORT =====================
+function initReport(){
+  const yearSel = document.getElementById('repYear');
+  const curY = new Date().getFullYear();
+  for(let y=curY; y>=curY-3; y--){
+    const o=document.createElement('option'); o.value=y; o.textContent=y;
+    yearSel.appendChild(o);
+  }
+  document.getElementById('repMonth').value = new Date().getMonth();
+  renderReport();
+}
+
+function renderReport(){
+  const m = parseInt(document.getElementById('repMonth').value);
+  const y = parseInt(document.getElementById('repYear').value);
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const monthStart = y+'-'+String(m+1).padStart(2,'0')+'-01';
+  const monthEnd = y+'-'+String(m+1).padStart(2,'0')+'-'+String(daysInMonth).padStart(2,'0');
+
+  const monthRes = reservations.filter(r=>
+    r.status !== 'Cancelled' &&
+    r.checkin <= monthEnd && r.checkout >= monthStart
+  );
+
+  const checkedOut = reservations.filter(r=> r.status==='Checked-Out' && r.checkout>=monthStart && r.checkout<=monthEnd+'z');
+  const totalRevenue = checkedOut.reduce((sum,r)=>{
+    const rate = parseFloat(r.rate)||0;
+    const n = nights(r.checkin,r.checkout);
+    return sum + rate*n;
+  },0);
+  const totalNights = checkedOut.reduce((sum,r)=>sum+nights(r.checkin,r.checkout),0);
+  const occupancyRate = Math.round((totalNights/(ROOMS.length*daysInMonth))*100);
+  const avgRate = checkedOut.length ? Math.round(totalRevenue/totalNights||0) : 0;
+
+  document.getElementById('repStats').innerHTML=`
+    <div class="report-card"><div class="report-num">${monthRes.length}</div><div class="report-lbl">Total Bookings</div></div>
+    <div class="report-card"><div class="report-num">${checkedOut.length}</div><div class="report-lbl">Checked-Out</div></div>
+    <div class="report-card"><div class="report-num">${occupancyRate}%</div><div class="report-lbl">Occupancy Rate</div></div>
+    <div class="report-card"><div class="report-num">฿${totalRevenue.toLocaleString()}</div><div class="report-lbl">Total Revenue</div></div>
+    <div class="report-card"><div class="report-num">฿${avgRate.toLocaleString()}</div><div class="report-lbl">Avg Rate/Night</div></div>
+    <div class="report-card"><div class="report-num">${totalNights}</div><div class="report-lbl">Total Nights Sold</div></div>
+  `;
+
+  if(!monthRes.length){
+    document.getElementById('repTable').innerHTML='<div class="empty" style="padding:30px;text-align:center;color:var(--gray)">📭 No bookings for '+monthNames[m]+' '+y+'</div>';
+    return;
+  }
+
+  const sorted = [...monthRes].sort((a,b)=>a.checkin>b.checkin?1:-1);
+  document.getElementById('repTable').innerHTML=`
+    <table>
+      <thead><tr>
+        <th>Guest</th><th>Room</th><th>Check-In</th><th>Check-Out</th>
+        <th>Nights</th><th>Guests</th><th>Rate/Night</th><th>Total</th><th>Status</th><th>Source</th>
+      </tr></thead>
+      <tbody>
+        ${sorted.map(r=>{
+          const n=nights(r.checkin,r.checkout);
+          const rate=parseFloat(r.rate)||0;
+          const total=rate*n;
+          const sc=r.status==='Checked-In'?'s-in':r.status==='Checked-Out'?'s-out':'s-res';
+          return `<tr>
+            <td><strong>${r.guest}</strong><br><span style="font-size:0.72rem;color:var(--gray)">${r.phone}</span></td>
+            <td>${r.room}</td>
+            <td>${fmtDate(r.checkin)}</td>
+            <td>${fmtDate(r.checkout)}</td>
+            <td>${n}</td>
+            <td>${r.guests}</td>
+            <td>${rate?'฿'+rate.toLocaleString():'—'}</td>
+            <td>${total?'฿'+total.toLocaleString():'—'}</td>
+            <td><span class="stag ${sc}">${r.status}</span></td>
+            <td>${r.source}</td>
+          </tr>`;
+        }).join('')}
+        <tr class="report-total">
+          <td colspan="4"><strong>TOTAL</strong></td>
+          <td><strong>${totalNights}</strong></td>
+          <td></td><td></td>
+          <td><strong>฿${totalRevenue.toLocaleString()}</strong></td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+// ===================== CANCELLED TAB =====================
+let resTab = 'active';
+function setResTab(tab){
+  resTab = tab;
+  document.getElementById('tab-active').style.color = tab==='active'?'var(--blue)':'var(--gray)';
+  document.getElementById('tab-active').style.borderBottomColor = tab==='active'?'var(--blue)':'transparent';
+  document.getElementById('tab-cancelled').style.color = tab==='cancelled'?'var(--blue)':'var(--gray)';
+  document.getElementById('tab-cancelled').style.borderBottomColor = tab==='cancelled'?'var(--blue)':'transparent';
+  // Hide status filter for cancelled tab
+  document.getElementById('filterStatus').style.display = tab==='active'?'':'none';
+  renderRes();
+}
+
 // ===================== INIT =====================
 const now=new Date();
 document.getElementById('todayBadge').textContent=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1299,8 +1569,10 @@ const tmr=new Date();tmr.setDate(tmr.getDate()+1);
 document.getElementById('f-checkout').value=tmr.toISOString().split('T')[0];
 populateRoomSel();renderDash();
 loadFromSheets();
-// Auto-sync to sheets every 5 minutes
 setInterval(syncToSheets, 5*60*1000);
+checkLogin();
+initReport();
+setLang(currentLang);
 </script>
 </body>
 </html>

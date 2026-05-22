@@ -580,7 +580,7 @@
         </select>
       </div>
       <div class="fgrp"><label><span data-key="guests">Guests</span></label><input type="number" id="f-guests" value="1" min="1"></div>
-      <div class="fgrp"><label><span data-key="ratenight">Rate / Night (฿)</span></label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
+      <div class="fgrp"><label><span data-key="ratenight">Rate / Night (฿)</span> *</label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
       <div class="fgrp"><label><span data-key="payment">Payment Method</span></label>
         <select id="f-payment">
           <option value="">— Select —</option>
@@ -787,7 +787,7 @@ const LANG = {
     guestname:'ชื่อแขก', telephone:'เบอร์โทร', checkin:'วันเช็คอิน',
     checkout:'วันเช็คเอาต์', room:'ห้อง', source:'ช่องทางการจอง',
     guests:'จำนวนแขก', ratenight:'ราคา / คืน (฿)', payment:'วิธีชำระเงิน',
-    breakfast:'รวมอาหารเช้า', extrabed:'เตียงเสริม (มีค่าใช้จ่าย)', pet:'อนุญาตสัตว์เลี้ยง',
+    breakfast:'รวมอาหารเช้า', extrabed:'เตียงเสริม (มีค่าใช้จ่าย)', pet:'มีสัตว์เลี้ยง',
     remark:'หมายเหตุ', confirm:'ยืนยันการจอง', clear:'ล้างข้อมูล',
     allres:'การจองทั้งหมด', active:'ใช้งาน', cancelled:'ยกเลิก',
     search:'ค้นหาแขก, ห้อง...', allstatus:'สถานะทั้งหมด', allrooms:'ห้องทั้งหมด',
@@ -1158,6 +1158,7 @@ function submitBooking(){
   const err=document.getElementById('formError');
 
   if(!guest||!phone||!room||!source||!checkin||!checkout){err.style.display='block';err.textContent='⚠️ Please fill in all required fields.';return}
+  if(!rate){err.style.display='block';err.textContent='⚠️ Please enter the room rate per night.';return}
   if(checkin>=checkout){err.style.display='block';err.textContent='⚠️ Check-out must be after check-in.';return}
   const ri=ROOMS.find(r=>r.num===room);
   const mx=ri.maxGuest+(ri.extraBed&&extrabed?1:0);

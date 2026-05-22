@@ -505,9 +505,15 @@
 <!-- LOGIN OVERLAY -->
 <div class="login-overlay" id="loginOverlay" style="display:flex">
   <div class="login-box">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <div class="lang-toggle" style="background:rgba(27,58,107,0.1)">
+        <button class="lang-btn active" onclick="setLangLogin('en')" id="loginLangEn" style="color:var(--navy-dark)">EN</button>
+        <button class="lang-btn" onclick="setLangLogin('th')" id="loginLangTh" style="color:var(--navy-dark)">ไทย</button>
+      </div>
+    </div>
     <div class="login-logo">🏡</div>
     <div class="login-title">The Barn Hua Hin</div>
-    <div class="login-sub">Staff Login — Please sign in to continue</div>
+    <div class="login-sub" id="loginSubText">Staff Login — Please sign in to continue</div>
     <input type="text" id="loginName" placeholder="Your name *">
     <select id="loginShift">
       <option value="">— Select Shift —</option>
@@ -517,7 +523,7 @@
       <option>Night (22:00–06:00)</option>
     </select>
     <input type="password" id="loginPass" placeholder="Password *" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="loginErr">❌ Incorrect password. Please try again.</div>
   </div>
 </div>
@@ -1533,7 +1539,6 @@ function setLang(lang){
     if(v==='report') renderReport();
   }
   applyFormLang();
-  applyLoginLang();
 }
 
 function applyFormLang(){
@@ -1544,13 +1549,23 @@ function applyFormLang(){
   if(sel && sel.options[0]) sel.options[0].text = t('selectroom');
 }
 
-function applyLoginLang(){
-  const el=(id,key)=>{ const e=document.getElementById(id); if(e) e.placeholder=t(key); };
-  el('loginName','loginName'); el('loginPass','loginPass');
-  const sub = document.querySelector('.login-sub');
-  if(sub) sub.textContent = t('loginTitle');
-  const btn = document.querySelector('.login-box .btn');
-  if(btn) btn.textContent = t('signin');
+function setLangLogin(lang){
+  setLang(lang);
+  // Update login page buttons
+  document.getElementById('loginLangEn').classList.toggle('active', lang==='en');
+  document.getElementById('loginLangTh').classList.toggle('active', lang==='th');
+  // Update login text
+  document.getElementById('loginSubText').textContent = t('loginTitle');
+  document.getElementById('loginName').placeholder = t('loginName')+' *';
+  document.getElementById('loginPass').placeholder = t('loginPass')+' *';
+  document.getElementById('loginBtn').textContent = t('signin');
+  // Update shift options
+  const shift = document.getElementById('loginShift');
+  shift.options[0].text = lang==='th' ? '— เลือกกะ —' : '— Select Shift —';
+  shift.options[1].text = 'Admin';
+  shift.options[2].text = lang==='th' ? 'เช้า (06:00–14:00)' : 'Morning (06:00–14:00)';
+  shift.options[3].text = lang==='th' ? 'บ่าย (14:00–22:00)' : 'Afternoon (14:00–22:00)';
+  shift.options[4].text = lang==='th' ? 'กลางคืน (22:00–06:00)' : 'Night (22:00–06:00)';
 }
 
 // ===================== REPORT =====================
@@ -1665,6 +1680,7 @@ setInterval(syncToSheets, 5*60*1000);
 checkLogin();
 initReport();
 setLang(currentLang);
+setLangLogin(currentLang);
 </script>
 </body>
 </html>

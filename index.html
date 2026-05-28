@@ -574,7 +574,6 @@
     <div class="form-grid">
       <div class="fgrp"><label><span data-key="firstname">First Name</span> *</label><input type="text" id="f-firstname" placeholder="First name"></div>
       <div class="fgrp"><label><span data-key="lastname">Last Name</span></label><input type="text" id="f-lastname" placeholder="Last name"></div>
-      <div class="fgrp"><label><span data-key="telephone">Telephone</span></label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
       <div class="fgrp"><label><span data-key="checkin">Check-In Date</span> *</label><input type="date" id="f-checkin" onchange="onDateChange()"></div>
       <div class="fgrp"><label><span data-key="checkout">Check-Out Date</span> *</label><input type="date" id="f-checkout" onchange="onDateChange()"></div>
       <div class="fgrp"><label><span data-key="room">Room</span> *</label><select id="f-room"><option value="">— Select dates first —</option></select></div>
@@ -586,6 +585,7 @@
           <option>Traveloka</option><option>Airbnb</option><option>Other</option>
         </select>
       </div>
+      <div class="fgrp"><label><span data-key="telephone">Telephone</span></label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
       <div class="fgrp"><label><span data-key="guests">Guests</span></label><input type="number" id="f-guests" value="1" min="1"></div>
       <div class="fgrp"><label><span data-key="ratenight">Rate / Night (฿)</span> *</label><input type="number" id="f-rate" placeholder="e.g. 2500" min="0"></div>
       <div class="fgrp"><label><span data-key="payment">Payment Method</span></label>
@@ -597,7 +597,7 @@
       </div>
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-breakfast"><span data-key="breakfast">🍳 Include Breakfast</span></div></label></div>
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow" id="extraBedRow"><input type="checkbox" id="f-extrabed"><span data-key="extrabed">🛏️ Extra Bed (charged)</span></div></label></div>
-      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-pet"><span data-key="pet">🐾 Pet Friendly Room</span></div></label></div>
+      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-pet"><span data-key="pet">🐾 มีสัตว์เลี้ยง</span></div></label></div>
       <div class="fgrp full"><label><span data-key="remark">Remark / Notes</span></label><textarea id="f-remark" placeholder="Special requests, notes..."></textarea></div>
     </div>
     <div id="extraBedNote" style="display:none;margin-top:12px;padding:10px;background:#fff8e1;border-radius:8px;font-size:0.82rem;color:#e65100"></div>

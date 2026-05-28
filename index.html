@@ -930,7 +930,10 @@ function loadFromSheets(){
     renderDash();
   });
 }
-function today(){return new Date().toISOString().split('T')[0]}
+function today(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function fmtDate(d){
   if(!d) return '—';
   // Handle full ISO timestamp like 2026-05-21T17:00:00.000Z
@@ -941,9 +944,11 @@ function fmtDate(d){
 }
 function nights(ci,co){
   if(!ci||!co) return 0;
-  const a = new Date(String(ci).split('T')[0]);
-  const b = new Date(String(co).split('T')[0]);
-  return Math.max(0,Math.round((b-a)/86400000));
+  const a = String(ci).split('T')[0].split('-');
+  const b = String(co).split('T')[0].split('-');
+  const da = new Date(parseInt(a[0]),parseInt(a[1])-1,parseInt(a[2]));
+  const db = new Date(parseInt(b[0]),parseInt(b[1])-1,parseInt(b[2]));
+  return Math.max(0,Math.round((db-da)/86400000));
 }
 
 function getRoomStatus(n){
@@ -1453,7 +1458,8 @@ function renderRoomGrid(){
           const ds = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
           if(ds >= ci && ds < co){
             const isFirst = ds === ci;
-            const nextDs = new Date(rgYear,rgMonth,d+1).toISOString().split('T')[0];
+            const nextD = new Date(rgYear,rgMonth,d+1);
+          const nextDs = nextD.getFullYear()+'-'+String(nextD.getMonth()+1).padStart(2,'0')+'-'+String(nextD.getDate()).padStart(2,'0');
             const isLast = nextDs >= co;
             cellData[d] = { res, isFirst, isLast,
               status: res.status==='Checked-In' ? 'occ' : 'res' };
@@ -1722,7 +1728,8 @@ document.getElementById('todayBadge').textContent=now.toLocaleDateString('en-GB'
 const ts=today();
 document.getElementById('f-checkin').value=ts;
 const tmr=new Date();tmr.setDate(tmr.getDate()+1);
-document.getElementById('f-checkout').value=tmr.toISOString().split('T')[0];
+const tmrStr = tmr.getFullYear()+'-'+String(tmr.getMonth()+1).padStart(2,'0')+'-'+String(tmr.getDate()).padStart(2,'0');
+document.getElementById('f-checkout').value=tmrStr;
 populateRoomSel();renderDash();
 loadFromSheets();
 setInterval(syncToSheets, 5*60*1000);

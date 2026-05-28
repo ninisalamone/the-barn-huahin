@@ -1737,7 +1737,7 @@ function sendLineNotify(type, res){
         guest:res.guest, phone:res.phone, room:res.room,
         checkin:String(res.checkin).split('T')[0],
         checkout:String(res.checkout).split('T')[0],
-        source:res.source, rate:res.rate||0,
+        source:res.source, rate:res.rate||0, payment:res.payment||'',
         pet:res.pet, breakfast:res.breakfast, remark:res.remark
       }
     })

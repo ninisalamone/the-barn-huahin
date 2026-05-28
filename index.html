@@ -572,8 +572,9 @@
   <div class="sec-title">➕ New Reservation</div>
   <div class="form-card">
     <div class="form-grid">
-      <div class="fgrp"><label><span data-key="guestname">Guest Name</span> *</label><input type="text" id="f-guest" placeholder="Full name"></div>
-      <div class="fgrp"><label><span data-key="telephone">Telephone</span> *</label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
+      <div class="fgrp"><label><span data-key="firstname">First Name</span> *</label><input type="text" id="f-firstname" placeholder="First name"></div>
+      <div class="fgrp"><label><span data-key="lastname">Last Name</span></label><input type="text" id="f-lastname" placeholder="Last name"></div>
+      <div class="fgrp"><label><span data-key="telephone">Telephone</span></label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
       <div class="fgrp"><label><span data-key="checkin">Check-In Date</span> *</label><input type="date" id="f-checkin" onchange="onDateChange()"></div>
       <div class="fgrp"><label><span data-key="checkout">Check-Out Date</span> *</label><input type="date" id="f-checkout" onchange="onDateChange()"></div>
       <div class="fgrp"><label><span data-key="room">Room</span> *</label><select id="f-room"><option value="">— Select dates first —</option></select></div>
@@ -766,7 +767,7 @@ const LANG = {
     available:'Available', checkedin:'Checked-In', reserved:'Reserved',
     arrivals:'Arrivals Today', departures:'Departures Today', totalrooms:'Total Rooms',
     roomoverview:'🏘️ Room Status Overview',
-    guestname:'Guest Name', telephone:'Telephone', checkin:'Check-In Date',
+    guestname:'Guest Name', firstname:'First Name', lastname:'Last Name', telephone:'Telephone', checkin:'Check-In Date',
     checkout:'Check-Out Date', room:'Room', source:'Booking Source',
     guests:'Guests', ratenight:'Rate / Night (฿)', payment:'Payment Method',
     breakfast:'Include Breakfast', extrabed:'Extra Bed (charged)', pet:'Pet Friendly Room',
@@ -790,7 +791,7 @@ const LANG = {
     available:'ว่าง', checkedin:'เช็คอินแล้ว', reserved:'จองแล้ว',
     arrivals:'เช็คอินวันนี้', departures:'เช็คเอาต์วันนี้', totalrooms:'ห้องทั้งหมด',
     roomoverview:'🏘️ สถานะห้องพัก',
-    guestname:'ชื่อแขก', telephone:'เบอร์โทร', checkin:'วันเช็คอิน',
+    guestname:'ชื่อแขก', firstname:'ชื่อ', lastname:'นามสกุล', telephone:'เบอร์โทร', checkin:'วันเช็คอิน',
     checkout:'วันเช็คเอาต์', room:'ห้อง', source:'ช่องทางการจอง',
     guests:'จำนวนแขก', ratenight:'ราคา / คืน (฿)', payment:'วิธีชำระเงิน',
     breakfast:'รวมอาหารเช้า', extrabed:'เตียงเสริม (มีค่าใช้จ่าย)', pet:'มีสัตว์เลี้ยง',
@@ -910,14 +911,17 @@ function loadFromSheets(){
       const loaded = data.rows.slice(1)
         .filter(row=>row[0])
         .map(row=>({
-          id:row[0], guest:row[1], phone:row[2], room:String(row[3]),
-          source:row[4],
-          checkin:cleanSheetDate(row[5]),
-          checkout:cleanSheetDate(row[6]),
-          guests:row[8], rate:parseFloat(row[9])||0, payment:row[10]||'',
-          breakfast:row[11]==='Yes', extrabed:row[12]==='Yes',
-          pet:row[13]==='Yes', remark:row[14]||'',
-          status:row[15]||'Reserved', createdAt:row[16]||''
+          id:row[0], 
+          firstname:row[1]||'', lastname:row[2]||'',
+          guest:(String(row[1]||'')+' '+String(row[2]||'')).trim(),
+          phone:String(row[3]||''), room:String(row[4]),
+          source:row[5],
+          checkin:cleanSheetDate(row[6]),
+          checkout:cleanSheetDate(row[7]),
+          guests:row[9], rate:parseFloat(row[10])||0, payment:row[11]||'',
+          breakfast:row[12]==='Yes', extrabed:row[13]==='Yes',
+          pet:row[14]==='Yes', remark:row[15]||'',
+          status:row[16]||'Reserved', createdAt:row[17]||''
         }))
         .filter((r,i,arr)=>arr.findIndex(x=>x.id===r.id)===i); // remove duplicates
       if(loaded.length > 0){
@@ -1151,7 +1155,7 @@ function onRoomChange(){
 function prefillRoom(n){showView('booking');setTimeout(()=>{document.getElementById('f-room').value=n;onRoomChange()},50)}
 
 function clearForm(){
-  ['f-guest','f-phone','f-room','f-source','f-checkin','f-checkout','f-guests','f-rate','f-payment','f-remark'].forEach(id=>{
+  ['f-firstname','f-lastname','f-phone','f-room','f-source','f-checkin','f-checkout','f-guests','f-rate','f-payment','f-remark'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value=el.tagName==='SELECT'?'':(id==='f-guests'?'1':'');
   });
   document.getElementById('f-breakfast').checked=false;
@@ -1169,8 +1173,9 @@ function editRes(id){
   showView('booking');editingId=id;
   setTimeout(()=>{
     populateRoomSel();
-    document.getElementById('f-guest').value=res.guest;
-    document.getElementById('f-phone').value=res.phone;
+    document.getElementById('f-firstname').value=res.firstname||res.guest||'';
+    document.getElementById('f-lastname').value=res.lastname||'';
+    document.getElementById('f-phone').value=res.phone||'';
     document.getElementById('f-room').value=res.room;
     document.getElementById('f-source').value=res.source;
     document.getElementById('f-checkin').value=res.checkin;
@@ -1188,7 +1193,9 @@ function editRes(id){
 }
 
 function submitBooking(){
-  const guest=document.getElementById('f-guest').value.trim();
+  const firstname=document.getElementById('f-firstname').value.trim();
+  const lastname=document.getElementById('f-lastname').value.trim();
+  const guest=(firstname+' '+lastname).trim();
   const phone=document.getElementById('f-phone').value.trim();
   const room=document.getElementById('f-room').value;
   const source=document.getElementById('f-source').value;
@@ -1203,7 +1210,7 @@ function submitBooking(){
   const remark=document.getElementById('f-remark').value.trim();
   const err=document.getElementById('formError');
 
-  if(!guest||!phone||!room||!source||!checkin||!checkout){err.style.display='block';err.textContent='⚠️ Please fill in all required fields.';return}
+  if(!firstname||!room||!source||!checkin||!checkout){err.style.display='block';err.textContent='⚠️ Please fill in all required fields (First Name, Room, Source, Dates).';return}
   if(!rate){err.style.display='block';err.textContent='⚠️ Please enter the room rate per night.';return}
   if(checkin>=checkout){err.style.display='block';err.textContent='⚠️ Check-out must be after check-in.';return}
   const ri=ROOMS.find(r=>r.num===room);
@@ -1215,9 +1222,9 @@ function submitBooking(){
 
   if(editingId){
     const i=reservations.findIndex(r=>r.id===editingId);
-    reservations[i]={...reservations[i],guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
+    reservations[i]={...reservations[i],firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
   }else{
-    reservations.push({id:'RES'+Date.now(),guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
+    reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
   }
   save();clearForm();
   sendLineNotify('🆕 New Booking', reservations[reservations.length-1] || reservations.find(r=>r.guest===guest&&r.room===room));
@@ -1590,7 +1597,7 @@ function setLang(lang){
 
 function applyFormLang(){
   const el = (id,key) => { const e=document.getElementById(id); if(e) e.placeholder=t(key); };
-  el('f-guest','guestname'); el('f-phone','telephone'); el('f-remark','remark');
+  el('f-firstname','firstname'); el('f-lastname','lastname'); el('f-phone','telephone'); el('f-remark','remark');
   el('filterSearch','search');
   const sel = document.getElementById('f-room');
   if(sel && sel.options[0]) sel.options[0].text = t('selectroom');

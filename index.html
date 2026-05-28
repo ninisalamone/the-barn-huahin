@@ -853,6 +853,12 @@ function save(){
   syncToSheets();
 }
 
+function saveQuiet(){
+  // Save without LINE notification - used by auto-sync
+  localStorage.setItem('barnReservations',JSON.stringify(reservations));
+  syncToSheets();
+}
+
 function syncToSheets(){
   const indicator = document.getElementById('syncIndicator');
   if(indicator){ indicator.textContent='☁️ Saving...'; indicator.style.color='var(--blue-lt)'; }
@@ -1226,10 +1232,17 @@ function submitBooking(){
   }else{
     reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
   }
-  save();clearForm();
-  const savedRes = reservations.find(r=>r.id===(editingId||'')) || reservations[reservations.length-1];
-  const notifyType = editingId ? '✏️ Booking Amended' : '🆕 New Booking';
-  sendLineNotify(notifyType, savedRes);
+  const isEditing = !!editingId;
+  const editId = editingId; // capture before clearForm clears it
+  save();
+  clearForm();
+  let savedRes;
+  if(isEditing){
+    savedRes = reservations.find(r=>r.id===editId);
+  } else {
+    savedRes = reservations.find(r=>r.guest===guest&&r.room===room&&r.checkin===checkin);
+  }
+  if(savedRes) sendLineNotify(isEditing ? '✏️ Booking Amended' : '🆕 New Booking', savedRes);
   alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
 }
 

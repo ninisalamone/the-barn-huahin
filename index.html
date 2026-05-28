@@ -844,19 +844,21 @@ const CATS=[
 
 let reservations=JSON.parse(localStorage.getItem('barnReservations')||'[]');
 let editingId=null;
+let sheetsLoaded=false; // Track if we've loaded from sheets
 
 const GS_URL='https://script.google.com/macros/s/AKfycbygs5_umSJr4cswcmKkKaTDbvODBYBSfa27qMNg1O5JApkVMTdz5IoB0-4iex6j2Ytc/exec';
 
 // Save to both localStorage AND Google Sheets
 function save(){
   localStorage.setItem('barnReservations',JSON.stringify(reservations));
-  syncToSheets();
+  // Only sync to sheets if we've already loaded from sheets
+  // This prevents overwriting with stale local data
+  if(sheetsLoaded) syncToSheets();
 }
 
 function saveQuiet(){
-  // Save without LINE notification - used by auto-sync
   localStorage.setItem('barnReservations',JSON.stringify(reservations));
-  syncToSheets();
+  if(sheetsLoaded) syncToSheets();
 }
 
 function syncToSheets(){
@@ -929,18 +931,17 @@ function loadFromSheets(){
           pet:row[14]==='Yes', remark:row[15]||'',
           status:row[16]||'Reserved', createdAt:row[17]||''
         }))
-        .filter((r,i,arr)=>arr.findIndex(x=>x.id===r.id)===i); // remove duplicates
-      if(loaded.length > 0){
-        reservations = loaded;
-        localStorage.setItem('barnReservations',JSON.stringify(reservations));
-        if(indicator){ indicator.textContent='☁️ Loaded '+loaded.length+' bookings'; indicator.style.color='#6ee7b7'; }
-      } else {
-        if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
-      }
+        .filter((r,i,arr)=>arr.findIndex(x=>x.id===r.id)===i);
+      // Sheets is MASTER — always overwrite local data
+      reservations = loaded;
+      localStorage.setItem('barnReservations',JSON.stringify(reservations));
+      sheetsLoaded = true;
+      if(indicator){ indicator.textContent='☁️ Loaded '+loaded.length+' bookings'; indicator.style.color='#6ee7b7';
+        setTimeout(()=>{ indicator.textContent='☁️ Synced'; },3000); }
     } else {
+      sheetsLoaded = true;
       if(indicator){ indicator.textContent='☁️ Synced'; indicator.style.color='#6ee7b7'; }
     }
-    // Always refresh all views after load
     renderDash();
     const activeView = document.querySelector('.view.active');
     if(activeView){
@@ -951,6 +952,7 @@ function loadFromSheets(){
       if(v==='report') renderReport();
     }
   }).catch(()=>{
+    sheetsLoaded = true;
     if(indicator){ indicator.textContent='📱 Local Only'; indicator.style.color='#fca5a5'; }
     renderDash();
   });
@@ -1769,7 +1771,6 @@ const tmrStr = tmr.getFullYear()+'-'+String(tmr.getMonth()+1).padStart(2,'0')+'-
 document.getElementById('f-checkout').value=tmrStr;
 populateRoomSel();renderDash();
 loadFromSheets();
-setInterval(syncToSheets, 5*60*1000);
 checkLogin();
 initReport();
 setLang(currentLang);

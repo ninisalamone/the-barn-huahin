@@ -1227,7 +1227,9 @@ function submitBooking(){
     reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
   }
   save();clearForm();
-  sendLineNotify('🆕 New Booking', reservations[reservations.length-1] || reservations.find(r=>r.guest===guest&&r.room===room));
+  const savedRes = reservations.find(r=>r.id===(editingId||'')) || reservations[reservations.length-1];
+  const notifyType = editingId ? '✏️ Booking Amended' : '🆕 New Booking';
+  sendLineNotify(notifyType, savedRes);
   alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
 }
 
@@ -1281,8 +1283,8 @@ function renderRes(){
   }).join('');
 }
 
-function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();sendLineNotify('✅ Check-In',r);renderDash();renderRes()}}
-function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';save();sendLineNotify('🏁 Check-Out',r);renderDash();renderRes()}}
+function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();renderDash();renderRes()}}
+function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';save();renderDash();renderRes()}}
 function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}

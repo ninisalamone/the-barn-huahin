@@ -883,7 +883,22 @@ function syncToSheets(){
   xhr.send(payload);
 }
 
-// Load from Google Sheets on startup
+function cleanSheetDate(val){
+  if(!val) return '';
+  var s = String(val);
+  // Google Sheets returns dates like "Thu May 29 2026 00:00:00 GMT+0700"
+  // or as YYYY-MM-DD or with T
+  if(s.indexOf('T') > -1) return s.split('T')[0];
+  // Try to parse as date object string
+  var d = new Date(s);
+  if(!isNaN(d.getTime())){
+    // Use local date parts to avoid timezone shift
+    return d.getFullYear()+'-'+
+      String(d.getMonth()+1).padStart(2,'0')+'-'+
+      String(d.getDate()).padStart(2,'0');
+  }
+  return s;
+}
 function loadFromSheets(){
   const indicator = document.getElementById('syncIndicator');
   if(indicator){ indicator.textContent='☁️ Connecting...'; indicator.style.color='var(--blue-lt)'; }
@@ -897,8 +912,8 @@ function loadFromSheets(){
         .map(row=>({
           id:row[0], guest:row[1], phone:row[2], room:String(row[3]),
           source:row[4],
-          checkin:String(row[5]).split('T')[0],
-          checkout:String(row[6]).split('T')[0],
+          checkin:cleanSheetDate(row[5]),
+          checkout:cleanSheetDate(row[6]),
           guests:row[8], rate:parseFloat(row[9])||0, payment:row[10]||'',
           breakfast:row[11]==='Yes', extrabed:row[12]==='Yes',
           pet:row[13]==='Yes', remark:row[14]||'',
@@ -1177,8 +1192,8 @@ function submitBooking(){
   const phone=document.getElementById('f-phone').value.trim();
   const room=document.getElementById('f-room').value;
   const source=document.getElementById('f-source').value;
-  const checkin=document.getElementById('f-checkin').value;
-  const checkout=document.getElementById('f-checkout').value;
+  const checkin=document.getElementById('f-checkin').value.trim().split('T')[0];
+  const checkout=document.getElementById('f-checkout').value.trim().split('T')[0];
   const guests=parseInt(document.getElementById('f-guests').value)||1;
   const rate=parseFloat(document.getElementById('f-rate').value)||0;
   const payment=document.getElementById('f-payment').value;

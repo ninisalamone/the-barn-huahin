@@ -1791,7 +1791,8 @@ function sendLineNotify(type, res){
   if(!res) return;
   const n = Math.max(0,Math.round((new Date(String(res.checkout).split('T')[0])-new Date(String(res.checkin).split('T')[0]))/86400000));
   const total = (parseFloat(res.rate)||0) * n;
-  const staffName = currentStaff ? currentStaff.name : 'Unknown';
+  const staffData = currentStaff || JSON.parse(sessionStorage.getItem('barnStaff')||'{}');
+  const staffName = staffData.name || 'Unknown';
   fetch(GS_URL, {
     method:'POST',
     mode:'no-cors',

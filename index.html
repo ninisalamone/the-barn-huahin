@@ -983,19 +983,29 @@ function getRoomStatus(n){
   // Currently checked in
   const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
   if(a) return 'occupied';
-  // Reserved and should be here today (checkin is today or already past but not checked in yet)
+  // Reserved and arriving today or overdue
   const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&r.checkin<=tod&&r.checkout>tod);
   if(b) return 'reserved';
-  // Available — future bookings don't affect today's status
+  // Available — future bookings don't affect dashboard/floor plan
   return 'available';
 }
 function getActiveRes(n){
   const tod=today();
-  return reservations.find(r=>r.room===n&&
-    (r.status==='Checked-In'||r.status==='Reserved')&&
-    r.checkin<=tod&&r.checkout>tod);
+  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
+  if(a) return a;
+  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&r.checkin<=tod&&r.checkout>tod);
+  if(b) return b;
+  return null;
 }
-function getTodayRes(n){
+function getResForDate(roomNum, dateStr){
+  return reservations.find(r=>
+    r.room===roomNum &&
+    r.status!=='Cancelled' &&
+    r.status!=='Checked-Out' &&
+    String(r.checkin).split('T')[0] <= dateStr &&
+    String(r.checkout).split('T')[0] > dateStr
+  );
+}
   const tod=today();
   return reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
 }
@@ -1057,7 +1067,45 @@ function renderDash(){
   document.getElementById('roomGrid').innerHTML=h;
 }
 
-function showRoomDetail(n){
+function showRoomDetailForDate(roomNum, dateStr){
+  // Find reservation for this specific date
+  const res = getResForDate(roomNum, dateStr);
+  if(res){
+    // Temporarily override getActiveRes for this room to show the right reservation
+    showRoomDetailWithRes(roomNum, res);
+  } else {
+    showRoomDetail(roomNum);
+  }
+}
+
+function showRoomDetailWithRes(roomNum, res){
+  const room = ROOMS.find(r=>r.num===roomNum);
+  const st = res.status==='Checked-In'?'occupied':'reserved';
+  document.getElementById('rmTitle').textContent='Room '+roomNum+' — '+room.type;
+  let b='<div class="drow"><span class="dkey">Status</span><span class="dval">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span></div>'+
+    '<div class="drow"><span class="dkey">Type</span><span class="dval">'+room.type+'</span></div>'+
+    '<div class="drow"><span class="dkey">Max Guests</span><span class="dval">'+room.maxGuest+' persons'+(room.extraBed?' + 1 extra bed':'')+'</span></div>'+
+    '<div style="margin:12px 0 8px;font-weight:600;color:var(--navy);font-size:0.85rem">RESERVATION</div>'+
+    '<div class="drow"><span class="dkey">Guest</span><span class="dval">'+res.guest+'</span></div>'+
+    '<div class="drow"><span class="dkey">Phone</span><span class="dval">'+(res.phone||'—')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Check-In</span><span class="dval">'+fmtDate(res.checkin)+'</span></div>'+
+    '<div class="drow"><span class="dkey">Check-Out</span><span class="dval">'+fmtDate(res.checkout)+'</span></div>'+
+    '<div class="drow"><span class="dkey">Nights</span><span class="dval">'+nights(res.checkin,res.checkout)+'</span></div>'+
+    '<div class="drow"><span class="dkey">Rate/Night</span><span class="dval">'+(res.rate?'฿'+parseFloat(res.rate).toLocaleString():'—')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Total</span><span class="dval">'+(res.rate?'฿'+(parseFloat(res.rate)*nights(res.checkin,res.checkout)).toLocaleString():'—')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Source</span><span class="dval">'+res.source+'</span></div>'+
+    '<div class="drow"><span class="dkey">Payment</span><span class="dval">'+(res.payment||'—')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Breakfast</span><span class="dval">'+(res.breakfast?'✅ Yes':'❌ No')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Extra Bed</span><span class="dval">'+(res.extrabed?'✅ Yes':'❌ No')+'</span></div>'+
+    '<div class="drow"><span class="dkey">Pet</span><span class="dval">'+(res.pet?'🐾 Yes':'❌ No')+'</span></div>'+
+    (res.remark?'<div class="drow"><span class="dkey">Remark</span><span class="dval" style="text-align:right;max-width:60%">'+res.remark+'</span></div>':'')+
+    '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+
+    (res.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+res.id+'\');closeModal(\'roomModal\')">Check-In</button>':'')+
+    (res.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+res.id+'\');closeModal(\'roomModal\')">Check-Out</button>':'')+
+    '<button class="btn btn-sm btn-outline" onclick="closeModal(\'roomModal\');editRes(\''+res.id+'\')">Edit</button></div>';
+  document.getElementById('rmBody').innerHTML=b;
+  document.getElementById('roomModal').classList.add('open');
+}
   const room=ROOMS.find(r=>r.num===n),res=getActiveRes(n),st=getRoomStatus(n);
   document.getElementById('rmTitle').textContent='Room '+n+' — '+room.type;
   let b='<div class="drow"><span class="dkey">Status</span><span class="dval">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span></div>'+
@@ -1532,10 +1580,10 @@ function renderRoomGrid(){
           const petStr = cd.isFirst && res.pet ? '<span class="rg-pet">🐾</span>' : '';
           cellCls += cd.status==='occ'?'occ ':cd.status==='res'?'res ':'chkout ';
           // On click open room detail
-          barHtml = `<div class="${posCls} ${barCls}" onclick="showRoomDetail('${roomNum}')" title="${res.guest} | ${fmtDate(res.checkin)}–${fmtDate(res.checkout)}">${nameStr}${petStr}</div>`;
+          barHtml = `<div class="${posCls} ${barCls}" onclick="showRoomDetailForDate('${roomNum}','${rgYear}-${String(rgMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')" title="${res.guest} | ${fmtDate(res.checkin)}–${fmtDate(res.checkout)}">${nameStr}${petStr}</div>`;
         }
 
-        html += `<td class="rg-day ${cellCls}" onclick="showRoomDetail('${roomNum}')">${barHtml}</td>`;
+        html += `<td class="rg-day ${cellCls}" onclick="showRoomDetailForDate('${roomNum}','${rgYear}-${String(rgMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')">${barHtml}</td>`;
       });
 
       html += `</tr>`;

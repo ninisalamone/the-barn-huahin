@@ -1791,6 +1791,7 @@ function sendLineNotify(type, res){
   if(!res) return;
   const n = Math.max(0,Math.round((new Date(String(res.checkout).split('T')[0])-new Date(String(res.checkin).split('T')[0]))/86400000));
   const total = (parseFloat(res.rate)||0) * n;
+  const staffName = currentStaff ? currentStaff.name : 'Unknown';
   fetch(GS_URL, {
     method:'POST',
     mode:'no-cors',
@@ -1798,6 +1799,7 @@ function sendLineNotify(type, res){
     body: JSON.stringify({
       action:'notify',
       type: type,
+      staffName: staffName,
       reservation: {
         guest:res.guest, phone:res.phone, room:res.room,
         checkin:String(res.checkin).split('T')[0],

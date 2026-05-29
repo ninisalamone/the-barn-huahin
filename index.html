@@ -1006,9 +1006,6 @@ function getResForDate(roomNum, dateStr){
     String(r.checkout).split('T')[0] > dateStr
   );
 }
-  const tod=today();
-  return reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
-}
 
 function showView(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
@@ -1106,6 +1103,8 @@ function showRoomDetailWithRes(roomNum, res){
   document.getElementById('rmBody').innerHTML=b;
   document.getElementById('roomModal').classList.add('open');
 }
+
+function showRoomDetail(n){
   const room=ROOMS.find(r=>r.num===n),res=getActiveRes(n),st=getRoomStatus(n);
   document.getElementById('rmTitle').textContent='Room '+n+' — '+room.type;
   let b='<div class="drow"><span class="dkey">Status</span><span class="dval">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span></div>'+
@@ -1572,6 +1571,7 @@ function renderRoomGrid(){
         let inner = `<span class="rg-day-num">${''}</span>`;
         let barHtml = '';
 
+        const dateStr = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
         if(cd && cd.res){
           const res = cd.res;
           const barCls = cd.status==='occ'?'bar-occ':cd.status==='chkout'?'bar-occ':cd.status==='res'?'bar-res':'bar-in';
@@ -1579,11 +1579,10 @@ function renderRoomGrid(){
           const nameStr = cd.isFirst ? res.guest.split(' ')[0] : '';
           const petStr = cd.isFirst && res.pet ? '<span class="rg-pet">🐾</span>' : '';
           cellCls += cd.status==='occ'?'occ ':cd.status==='res'?'res ':'chkout ';
-          // On click open room detail
-          barHtml = `<div class="${posCls} ${barCls}" onclick="showRoomDetailForDate('${roomNum}','${rgYear}-${String(rgMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')" title="${res.guest} | ${fmtDate(res.checkin)}–${fmtDate(res.checkout)}">${nameStr}${petStr}</div>`;
+          barHtml = '<div class="'+posCls+' '+barCls+'" onclick="showRoomDetailForDate(\''+roomNum+'\',\''+dateStr+'\')" title="'+res.guest+' | '+fmtDate(res.checkin)+'–'+fmtDate(res.checkout)+'">'+nameStr+petStr+'</div>';
         }
 
-        html += `<td class="rg-day ${cellCls}" onclick="showRoomDetailForDate('${roomNum}','${rgYear}-${String(rgMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')">${barHtml}</td>`;
+        html += '<td class="rg-day '+cellCls+'" onclick="showRoomDetailForDate(\''+roomNum+'\',\''+dateStr+'\')">'+barHtml+'</td>';
       });
 
       html += `</tr>`;

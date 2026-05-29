@@ -1279,7 +1279,7 @@ function submitBooking(){
     const i=reservations.findIndex(r=>r.id===editingId);
     reservations[i]={...reservations[i],firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
   }else{
-    reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString()});
+    reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString(),createdBy:currentStaff?currentStaff.name:'Unknown'});
   }
   const isEditing = !!editingId;
   const editId = editingId; // capture before clearForm clears it
@@ -1333,6 +1333,7 @@ function renderRes(){
         (r.extrabed?'<span class="badge b-xbd">🛏️ Extra Bed</span>':'')+
         (r.pet?'<span class="badge b-pet">🐾 Pet</span>':'')+
         (r.payment?'<span class="badge b-pay">'+r.payment+'</span>':'')+
+        (r.createdBy?'<span class="badge" style="background:#e0e7ff;color:#3730a3">👤 '+r.createdBy+'</span>':'')+
       '</div>'+
       (resTab==='active'?
       '<div class="res-actions">'+

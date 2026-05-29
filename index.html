@@ -1417,7 +1417,7 @@ function renderFloorPlan() {
     const pos = FP_ROOMS_MAP[room.num];
     if (!pos) return;
     const st = getRoomStatus(room.num);
-    const res = getTodayRes(room.num); // today only
+    const res = getActiveRes(room.num); // today only
     const guestName = res ? res.guest.split(' ')[0] : '';
     const typeLabel = room.type
       .replace('Pool Villa 3BR','Villa 3BR')

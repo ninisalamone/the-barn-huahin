@@ -1977,6 +1977,22 @@ function initRoomCharge(res){
     description:'Room '+res.room+(room?' ('+room.type+')':''),
     qty:n,unitPrice:rate,amount:rate*n
   });
+  // Auto-add OTA prepaid payment once — if reservation was paid via OTA
+  const isOTA=(res.payment||'').toLowerCase().includes('ota')||
+               (res.payment||'').toLowerCase().includes('prepaid');
+  if(isOTA && !folio._otaInit){
+    const roomAmt=rate*n;
+    if(roomAmt>0){
+      folio.payments.push({
+        id:'py_ota_'+Date.now(),
+        date:dOnly(res.checkin),
+        description:'OTA Prepaid',
+        method:'OTA (Prepaid)',
+        amount:roomAmt
+      });
+    }
+    folio._otaInit=true; // mark so it only auto-adds once
+  }
   saveFoliosLocal();syncFolioToServer(res.id);
 }
 

@@ -1969,15 +1969,21 @@ function getFolio(resId){
 
 function initRoomCharge(res){
   const folio=getFolio(res.id);
-  if(folio.charges.some(c=>c.type==='room'))return;
   const rate=parseFloat(res.rate)||0,n=nights(res.checkin,res.checkout);
-  const room=ROOMS.find(r=>r.num===res.room);
-  folio.charges.unshift({
-    id:'ch_'+Date.now(),type:'room',date:dOnly(res.checkin),
-    description:'Room '+res.room+(room?' ('+room.type+')':''),
-    qty:n,unitPrice:rate,amount:rate*n
-  });
-  // Auto-add OTA prepaid payment once — if reservation was paid via OTA
+  let changed=false;
+
+  // Add room charge if not already there
+  if(!folio.charges.some(c=>c.type==='room')){
+    const room=ROOMS.find(r=>r.num===res.room);
+    folio.charges.unshift({
+      id:'ch_'+Date.now(),type:'room',date:dOnly(res.checkin),
+      description:'Room '+res.room+(room?' ('+room.type+')':''),
+      qty:n,unitPrice:rate,amount:rate*n
+    });
+    changed=true;
+  }
+
+  // Auto-add OTA prepaid payment once — runs even if room charge already existed
   const isOTA=(res.payment||'').toLowerCase().includes('ota')||
                (res.payment||'').toLowerCase().includes('prepaid');
   if(isOTA && !folio._otaInit){
@@ -1991,9 +1997,11 @@ function initRoomCharge(res){
         amount:roomAmt
       });
     }
-    folio._otaInit=true; // mark so it only auto-adds once
+    folio._otaInit=true;
+    changed=true;
   }
-  saveFoliosLocal();syncFolioToServer(res.id);
+
+  if(changed){saveFoliosLocal();syncFolioToServer(res.id);}
 }
 
 function folioTotals(resId){

@@ -471,6 +471,7 @@
 
   /* Booking bar styles */
   .rg-day.occ   { background:#fdf3ee; }
+  .rg-day.done  { background:#f1f5f9; }
   .rg-day.res   { background:#e8f0fb; }
   .rg-day.chkin { background:#d1fae5; }
   .rg-day.chkout{ background:#fff3e0; }
@@ -491,6 +492,7 @@
   .rg-bar.bar-res   { background:var(--reserved); }
   .rg-bar.bar-in    { background:var(--available); }
   .rg-bar.bar-out   { background:#f59e0b; }
+  .rg-bar.bar-done  { background:#94a3b8; }
   .rg-bar .rg-pet   { margin-left:3px; font-size:0.65rem; }
   .rg-bar-start { border-radius:3px 0 0 3px; }
   .rg-bar-end   { border-radius:0 3px 3px 0; }
@@ -618,6 +620,7 @@
   <div class="sec-title">📋 <span class="t" data-en="All Reservations" data-th="การจองทั้งหมด">All Reservations</span></div>
   <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
     <button class="res-tab active" onclick="setResTab('active')" id="tab-active" style="background:none;border:none;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;color:var(--blue);border-bottom:2px solid var(--blue);margin-bottom:-2px;cursor:pointer">Active</button>
+    <button class="res-tab" onclick="setResTab('checkedout')" id="tab-checkedout" style="background:none;border:none;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer">Checked-Out</button>
     <button class="res-tab" onclick="setResTab('cancelled')" id="tab-cancelled" style="background:none;border:none;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer">Cancelled</button>
   </div>
   <div class="filter-bar">
@@ -716,6 +719,7 @@
       <div class="rg-legend-item"><div class="rg-ldot" style="background:var(--occupied)"></div>Checked-In / Stay</div>
       <div class="rg-legend-item"><div class="rg-ldot" style="background:var(--reserved)"></div>Reserved</div>
       <div class="rg-legend-item"><div class="rg-ldot" style="background:#f59e0b"></div>Check-Out</div>
+      <div class="rg-legend-item"><div class="rg-ldot" style="background:#94a3b8"></div>Checked-Out</div>
     </div>
   </div>
   <div class="rg-scroll">
@@ -1068,10 +1072,12 @@ function getActiveRes(n){
   return null;
 }
 // Soonest future booking for a room (for the "next guest" tooltip)
+// Only returns a booking that ARRIVES TODAY (and isn't the one already shown).
+// Far-future bookings are intentionally ignored — the dashboard shows today only.
 function getUpcomingRes(n, excludeId){
   const tod=today();
   return reservations
-    .filter(r=>r.room===n&&r.status!=='Cancelled'&&r.status!=='Checked-Out'&&(!excludeId||r.id!==excludeId)&&dOnly(r.checkin)>=tod)
+    .filter(r=>r.room===n&&r.status!=='Cancelled'&&r.status!=='Checked-Out'&&(!excludeId||r.id!==excludeId)&&dOnly(r.checkin)===tod)
     .sort((a,b)=>dOnly(a.checkin)<dOnly(b.checkin)?-1:1)[0]||null;
 }
 function getResForDate(roomNum, dateStr){
@@ -1391,7 +1397,10 @@ function renderRes(){
   const srch=(document.getElementById('filterSearch')?.value||'').toLowerCase();
   const stF=document.getElementById('filterStatus')?.value||'';
   const rmF=document.getElementById('filterRoom')?.value||'';
-  let list=[...reservations].filter(r=> resTab==='cancelled' ? r.status==='Cancelled' : r.status!=='Cancelled');
+  let list=[...reservations].filter(r=>
+    resTab==='cancelled' ? r.status==='Cancelled' :
+    resTab==='checkedout' ? r.status==='Checked-Out' :
+    (r.status!=='Cancelled' && r.status!=='Checked-Out'));
   if(srch)list=list.filter(r=>r.guest.toLowerCase().includes(srch)||r.room.toLowerCase().includes(srch)||(r.phone&&r.phone.includes(srch)));
   if(stF && resTab==='active')list=list.filter(r=>r.status===stF);
   if(rmF)list=list.filter(r=>r.room===rmF);
@@ -1630,7 +1639,7 @@ function renderRoomGrid(){
           const nextDs = nextD.getFullYear()+'-'+String(nextD.getMonth()+1).padStart(2,'0')+'-'+String(nextD.getDate()).padStart(2,'0');
             const isLast = nextDs >= co;
             cellData[d] = { res, isFirst, isLast,
-              status: (res.status==='Checked-In'||res.status==='Checked-Out') ? 'occ' : 'res' };
+              status: res.status==='Checked-In' ? 'occ' : (res.status==='Checked-Out' ? 'done' : 'res') };
           }
         }
         // Mark checkout day
@@ -1656,11 +1665,11 @@ function renderRoomGrid(){
         const dateStr = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
         if(cd && cd.res){
           const res = cd.res;
-          const barCls = cd.status==='occ'?'bar-occ':cd.status==='chkout'?'bar-out':cd.status==='res'?'bar-res':'bar-in';
+          const barCls = cd.status==='occ'?'bar-occ':cd.status==='done'?'bar-done':cd.status==='chkout'?'bar-out':cd.status==='res'?'bar-res':'bar-in';
           const posCls = cd.isFirst&&cd.isLast?'rg-bar':cd.isFirst?'rg-bar rg-bar-start':cd.isLast?'rg-bar rg-bar-end':'rg-bar rg-bar-mid';
           const nameStr = cd.isFirst ? res.guest.split(' ')[0] : '';
           const petStr = cd.isFirst && res.pet ? '<span class="rg-pet">🐾</span>' : '';
-          cellCls += cd.status==='occ'?'occ ':cd.status==='res'?'res ':'chkout ';
+          cellCls += cd.status==='occ'?'occ ':cd.status==='done'?'done ':cd.status==='res'?'res ':'chkout ';
           barHtml = '<div class="'+posCls+' '+barCls+'" onclick="showRoomDetailForDate(\''+roomNum+'\',\''+dateStr+'\')" title="'+res.guest+' | '+fmtDate(res.checkin)+'–'+fmtDate(res.checkout)+'">'+nameStr+petStr+'</div>';
         }
 
@@ -1858,11 +1867,15 @@ function renderReport(){
 let resTab = 'active';
 function setResTab(tab){
   resTab = tab;
-  document.getElementById('tab-active').style.color = tab==='active'?'var(--blue)':'var(--gray)';
-  document.getElementById('tab-active').style.borderBottomColor = tab==='active'?'var(--blue)':'transparent';
-  document.getElementById('tab-cancelled').style.color = tab==='cancelled'?'var(--blue)':'var(--gray)';
-  document.getElementById('tab-cancelled').style.borderBottomColor = tab==='cancelled'?'var(--blue)':'transparent';
-  // Hide status filter for cancelled tab
+  ['active','checkedout','cancelled'].forEach(function(name){
+    var el=document.getElementById('tab-'+name);
+    if(!el) return;
+    var on = (tab===name);
+    el.style.color = on?'var(--blue)':'var(--gray)';
+    el.style.fontWeight = on?'600':'500';
+    el.style.borderBottomColor = on?'var(--blue)':'transparent';
+  });
+  // Status filter only makes sense on the Active tab
   document.getElementById('filterStatus').style.display = tab==='active'?'':'none';
   renderRes();
 }

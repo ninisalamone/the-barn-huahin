@@ -545,6 +545,7 @@
     <button class="nav-btn active" onclick="showView('dashboard')">🏠 <span data-key="dashboard">Dashboard</span></button>
     <button class="nav-btn" onclick="showView('booking')">➕ <span data-key="newbooking">New Booking</span></button>
     <button class="nav-btn" onclick="showView('reservations')">📋 <span data-key="reservations">Reservations</span></button>
+    <button class="nav-btn" onclick="showView('folio')">📄 <span data-key="folio">Folio</span></button>
     <button class="nav-btn" onclick="showView('floorplan')">🗺️ <span data-key="floorplan">Floor Plan</span></button>
     <button class="nav-btn" onclick="showView('roomgrid')">📅 <span data-key="roomgrid">Room Grid</span></button>
     <button class="nav-btn" onclick="showView('report')">📊 <span data-key="report">Report</span></button>
@@ -634,6 +635,21 @@
     <select id="filterRoom" onchange="renderRes()"><option value="">All Rooms</option></select>
   </div>
   <div id="resList"></div>
+</div>
+
+<!-- FOLIO VIEW -->
+<div id="view-folio" class="view">
+  <div class="sec-title">📄 <span data-key="folio">Folio</span></div>
+  <div class="filter-bar">
+    <input type="text" id="folioSearch" placeholder="Search guest or room..." oninput="renderFolioView()">
+    <select id="folioFilter" onchange="renderFolioView()">
+      <option value="">All Statuses</option>
+      <option value="Reserved">Reserved</option>
+      <option value="Checked-In">Checked-In</option>
+      <option value="Checked-Out">Checked-Out</option>
+    </select>
+  </div>
+  <div id="folioViewList"></div>
 </div>
 
 <!-- FLOOR PLAN -->
@@ -757,6 +773,13 @@
 
 <!-- RES MODAL -->
 <div class="modal-overlay" id="resModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('resModal')">✕</button>
+    <div class="modal-title" id="resModalTitle">Reservation Details</div>
+    <div id="resModalBody"></div>
+    <div class="form-actions" id="resModalActions"></div>
+  </div>
+</div>
 
 <!-- FOLIO MODAL -->
 <div class="modal-overlay" id="folioModal" style="z-index:250">
@@ -764,13 +787,6 @@
     <button class="modal-close" onclick="closeFolio()">&#x2715;</button>
     <div class="modal-title" id="folioModalTitle">Guest Folio</div>
     <div id="folioModalBody" style="overflow-y:auto;max-height:75vh"></div>
-  </div>
-</div>
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('resModal')">✕</button>
-    <div class="modal-title" id="resModalTitle">Reservation Details</div>
-    <div id="resModalBody"></div>
-    <div class="form-actions" id="resModalActions"></div>
   </div>
 </div>
 
@@ -1115,6 +1131,7 @@ function showView(v){
   }
   if(v==='report')renderReport();
   if(v==='roomgrid') renderRoomGrid();
+  if(v==='folio') renderFolioView();
 }
 
 function renderDash(){
@@ -2304,6 +2321,42 @@ function printFolio(resId){
 function printReceipt(resId){
   const blob=new Blob([generateFolioHTML(resId,true)],{type:'text\/html'});
   window.open(URL.createObjectURL(blob),'_blank');
+}
+
+function renderFolioView(){
+  const search=(document.getElementById('folioSearch')?.value||'').toLowerCase();
+  const filter=document.getElementById('folioFilter')?.value||'';
+  let list=[...reservations].filter(r=>r.status!=='Cancelled');
+  if(filter) list=list.filter(r=>r.status===filter);
+  if(search) list=list.filter(r=>r.guest.toLowerCase().includes(search)||r.room.toLowerCase().includes(search));
+  list.sort((a,b)=>dOnly(b.checkin)<dOnly(a.checkin)?-1:1);
+  const cont=document.getElementById('folioViewList');
+  if(!list.length){cont.innerHTML='<div class="empty"><div class="emo">📭</div><div>No reservations found</div></div>';return;}
+  cont.innerHTML=list.map(r=>{
+    const tot=folioTotals(r.id);
+    const hasCharges=getFolio(r.id).charges.length>0||getFolio(r.id).payments.length>0;
+    const settled=tot.balance===0&&hasCharges;
+    const balColor=tot.balance>0?'var(--occupied)':settled?'var(--available)':'var(--gray)';
+    const sc=r.status==='Checked-In'?'s-in':r.status==='Checked-Out'?'s-out':'s-res';
+    return '<div class="res-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
+      '<div>'+
+        '<div class="res-name">'+esc(r.guest)+'</div>'+
+        '<div style="font-size:0.78rem;color:var(--gray);margin-top:2px">'+
+          'Room '+esc(r.room)+' &nbsp;·&nbsp; '+fmtDate(r.checkin)+' → '+fmtDate(r.checkout)+
+          ' &nbsp;·&nbsp; <span class="stag '+sc+'">'+r.status+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">'+
+        (hasCharges?
+          '<div style="text-align:right">'+
+            '<div style="font-size:0.72rem;color:var(--gray)">Balance</div>'+
+            '<div style="font-size:1rem;font-weight:700;color:'+balColor+'">฿'+Math.abs(tot.balance).toLocaleString('en-US')+'</div>'+
+          '</div>'
+        :'<div style="font-size:0.78rem;color:var(--gray);font-style:italic">No folio yet</div>')+
+        '<button class="btn btn-sm folio-btn" onclick="openFolio(\''+r.id+'\')">📄 Open Folio</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 

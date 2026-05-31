@@ -858,7 +858,7 @@ let sheetsLoaded=false; // Track if we've loaded from sheets
 // Syncs across devices via its OWN Apps Script web app (separate from bookings).
 // Paste your Housekeeping web-app URL below. If left blank, it falls back to
 // local-only (this device) so the app keeps working either way.
-const GS_HK_URL='https://script.google.com/macros/s/AKfycbzuK7bz6r5dr6bPwnI1IMHTJ6-Mvszl0HlSzM0sF_y9AzpqJsc6PTgZCNAXgHiEv-g8Hw/exec'; // ← paste your Housekeeping web-app /exec URL here
+const GS_HK_URL='https://script.google.com/macros/s/AKfycbyui2IWUlTPDtoX9PjA7k0eq3VB535LT__GRbC4ZPE5QzwEETNsuKb6FsQF6o6dLutY/exec'; // ← paste your Housekeeping web-app /exec URL here
 
 let housekeeping=JSON.parse(localStorage.getItem('barnHousekeeping')||'{}');
 function hkStatus(n){ return housekeeping[n]==='dirty' ? 'dirty' : 'clean'; }
@@ -879,7 +879,7 @@ function pushHk(room,status){
 // Pull the shared map and refresh the screen
 function loadHousekeeping(){
   if(!GS_HK_URL) return;
-  fetch(GS_HK_URL+'?action=load')
+  fetch(GS_HK_URL+'?action=load&type=hk')
     .then(r=>r.json())
     .then(data=>{
       if(data&&data.status==='ok'&&data.housekeeping){
@@ -917,7 +917,7 @@ function markHk(n,val){
   if(av&&av.id==='view-floorplan') renderFloorPlan();
 }
 
-const GS_URL='https://script.google.com/macros/s/AKfycbygs5_umSJr4cswcmKkKaTDbvODBYBSfa27qMNg1O5JApkVMTdz5IoB0-4iex6j2Ytc/exec';
+const GS_URL='https://script.google.com/macros/s/AKfycbyui2IWUlTPDtoX9PjA7k0eq3VB535LT__GRbC4ZPE5QzwEETNsuKb6FsQF6o6dLutY/exec';
 
 // Save to both localStorage AND Google Sheets
 function save(){

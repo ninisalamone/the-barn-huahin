@@ -757,6 +757,15 @@
 
 <!-- RES MODAL -->
 <div class="modal-overlay" id="resModal">
+
+<!-- FOLIO MODAL -->
+<div class="modal-overlay" id="folioModal" style="z-index:250">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeFolio()">&#x2715;</button>
+    <div class="modal-title" id="folioModalTitle">Guest Folio</div>
+    <div id="folioModalBody" style="overflow-y:auto;max-height:75vh"></div>
+  </div>
+</div>
   <div class="modal">
     <button class="modal-close" onclick="closeModal('resModal')">✕</button>
     <div class="modal-title" id="resModalTitle">Reservation Details</div>
@@ -1188,10 +1197,7 @@ function showRoomDetailWithRes(roomNum, res){
     '<div class="drow"><span class="dkey">Extra Bed</span><span class="dval">'+(res.extrabed?'✅ Yes':'❌ No')+'</span></div>'+
     '<div class="drow"><span class="dkey">Pet</span><span class="dval">'+(res.pet?'🐾 Yes':'❌ No')+'</span></div>'+
     (res.remark?'<div class="drow"><span class="dkey">Remark</span><span class="dval" style="text-align:right;max-width:60%">'+res.remark+'</span></div>':'')+
-    '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+
-    (res.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+res.id+'\');closeModal(\'roomModal\')">Check-In</button>':'')+
-    (res.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+res.id+'\');closeModal(\'roomModal\')">Check-Out</button>':'')+
-    '<button class="btn btn-sm btn-outline" onclick="closeModal(\'roomModal\');editRes(\''+res.id+'\')">Edit</button></div>';
+    '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+(res.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+res.id+'\');closeModal(\'roomModal\')">Check-In</button>':'')+(res.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+res.id+'\');closeModal(\'roomModal\')">Check-Out</button>':'')+(res.status==='Checked-Out'?'<button class="btn btn-sm btn-outline" onclick="reCheckIn(\''+res.id+'\');closeModal(\'roomModal\')">&#8629; Re-check-in</button>':'')+'<button class="btn btn-sm btn-outline" onclick="closeModal(\'roomModal\');editRes(\''+res.id+'\')">Edit</button>'+'<button class="btn btn-sm folio-btn" onclick="closeModal(\'roomModal\');openFolio(\''+res.id+'\')">&#128196; Folio</button></div>';
   document.getElementById('rmBody').innerHTML=b;
   document.getElementById('roomModal').classList.add('open');
 }
@@ -1430,13 +1436,7 @@ function renderRes(){
         (r.payment?'<span class="badge b-pay">'+r.payment+'</span>':'')+
         (r.createdBy?'<span class="badge" style="background:#e0e7ff;color:#3730a3">👤 '+r.createdBy+'</span>':'')+
       '</div>'+
-      (resTab==='active'?
-      '<div class="res-actions">'+
-        (r.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+r.id+'\')">'+t('checkinbtn')+'</button>':'')+
-        (r.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+r.id+'\')">'+t('checkoutbtn')+'</button>':'')+
-        '<button class="btn btn-sm btn-outline" onclick="editRes(\''+r.id+'\')">'+t('edit')+'</button>'+
-        '<button class="btn btn-sm btn-danger" onclick="cancelRes(\''+r.id+'\')">'+t('cancel')+'</button>'+
-      '</div>':'')+
+      (resTab!=='cancelled'?'<div class="res-actions">'+(resTab==='active'?((r.status==='Reserved'?'<button class="btn btn-blue btn-sm" onclick="checkIn(\''+r.id+'\')">'+t('checkinbtn')+'</button>':'')+(r.status==='Checked-In'?'<button class="btn btn-primary btn-sm" onclick="checkOut(\''+r.id+'\')">'+t('checkoutbtn')+'</button>':'')+'<button class="btn btn-sm btn-outline" onclick="editRes(\''+r.id+'\')">'+t('edit')+'</button>'+'<button class="btn btn-sm btn-danger" onclick="cancelRes(\''+r.id+'\')">'+t('cancel')+'</button>'):('<button class="btn btn-sm btn-outline" onclick="reCheckIn(\''+r.id+'\')">&#8629; Re-check-in</button>'))+'<button class="btn btn-sm folio-btn" onclick="openFolio(\''+r.id+'\')">&#128196; Folio</button>'+'</div>':'')+
       '</div>';
   }).join('');
 }
@@ -1446,6 +1446,11 @@ function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservati
 function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+function reCheckIn(id){
+  if(!confirm('Reverse check-out? Status will return to Checked-In.'))return;
+  const r=reservations.find(x=>x.id===id);
+  if(r){r.status='Checked-In';save();renderDash();renderRes();}
+}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open')}));
 
 // ===================== FLOOR PLAN =====================
@@ -1906,6 +1911,398 @@ function sendLineNotify(type, res){
   }).catch(()=>{});
 }
 
+// ===================== FOLIO =====================
+
+const LOGO_B64='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';
+
+let folios=JSON.parse(localStorage.getItem('barnFolios')||'{}');
+let _folioResId=null,_folioMode=null,_folioEditId=null;
+
+function saveFoliosLocal(){localStorage.setItem('barnFolios',JSON.stringify(folios));}
+
+function syncFolioToServer(resId){
+  if(!GS_URL)return;
+  const payload=JSON.stringify({action:'folio-save',resId,folio:folios[resId]||{charges:[],payments:[]}});
+  try{const xhr=new XMLHttpRequest();xhr.open('POST',GS_URL,true);
+    xhr.setRequestHeader('Content-Type','text/plain');xhr.send(payload);}
+  catch(e){try{fetch(GS_URL,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},body:payload});}catch(_){}}
+}
+
+function loadFoliosFromSheets(){
+  if(!GS_URL)return;
+  fetch(GS_URL+'?action=folio-load')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.status==='ok'&&data.folios){
+        folios=data.folios||{};saveFoliosLocal();
+        if(_folioResId)renderFolioModal();
+      }
+    }).catch(()=>{});
+}
+
+function getFolio(resId){
+  if(!folios[resId])folios[resId]={charges:[],payments:[]};
+  return folios[resId];
+}
+
+function initRoomCharge(res){
+  const folio=getFolio(res.id);
+  if(folio.charges.some(c=>c.type==='room'))return;
+  const rate=parseFloat(res.rate)||0,n=nights(res.checkin,res.checkout);
+  const room=ROOMS.find(r=>r.num===res.room);
+  folio.charges.unshift({
+    id:'ch_'+Date.now(),type:'room',date:dOnly(res.checkin),
+    description:'Room '+res.room+(room?' ('+room.type+')':''),
+    qty:n,unitPrice:rate,amount:rate*n
+  });
+  saveFoliosLocal();syncFolioToServer(res.id);
+}
+
+function folioTotals(resId){
+  const f=getFolio(resId);
+  const charges=f.charges.reduce((s,c)=>s+(parseFloat(c.amount)||0),0);
+  const payments=f.payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  return{charges,payments,balance:charges-payments};
+}
+
+function openFolio(resId){
+  const res=reservations.find(r=>r.id===resId);if(!res)return;
+  _folioResId=resId;_folioMode=null;_folioEditId=null;
+  initRoomCharge(res);renderFolioModal();
+  document.getElementById('folioModal').classList.add('open');
+}
+function closeFolio(){
+  document.getElementById('folioModal').classList.remove('open');
+  _folioResId=null;_folioMode=null;_folioEditId=null;
+}
+function setFolioMode(mode,id){_folioMode=mode;_folioEditId=id||null;renderFolioModal();}
+function cancelFolioMode(){_folioMode=null;_folioEditId=null;renderFolioModal();}
+
+function updateChargeCalc(){
+  const q=parseFloat(document.getElementById('fc-qty')?.value)||0;
+  const p=parseFloat(document.getElementById('fc-price')?.value)||0;
+  const el=document.getElementById('fc-amount');if(el)el.value=(q*p).toFixed(0);
+}
+
+function renderChargeForm(c,resId){
+  const ie=c!==null,d=c?c.date:today(),type=c?c.type:'meal',desc=c?c.description:'';
+  const qty=c?c.qty:1,up=c?c.unitPrice:0,id=c?c.id:'';
+  return '<div class="folio-form">'+
+    '<div class="folio-form-row">'+
+      '<div class="folio-form-group"><label>Type<\/label>'+
+        '<select id="fc-type">'+
+          '<option value="room"'+(type==='room'?' selected':'')+'>Room<\/option>'+
+          '<option value="meal"'+(type==='meal'?' selected':'')+'>Meal \/ F&B<\/option>'+
+          '<option value="laundry"'+(type==='laundry'?' selected':'')+'>Laundry<\/option>'+
+          '<option value="other"'+(type==='other'?' selected':'')+'>Other<\/option>'+
+        '<\/select><\/div>'+
+      '<div class="folio-form-group"><label>Date<\/label>'+
+        '<input type="date" id="fc-date" value="'+d+'"><\/div>'+
+    '<\/div>'+
+    '<div class="folio-form-row">'+
+      '<div class="folio-form-group folio-form-wide"><label>Description<\/label>'+
+        '<input type="text" id="fc-desc" value="'+esc(desc)+'" placeholder="e.g. Breakfast x2, Laundry..."><\/div>'+
+    '<\/div>'+
+    '<div class="folio-form-row">'+
+      '<div class="folio-form-group"><label>Qty<\/label>'+
+        '<input type="number" id="fc-qty" value="'+qty+'" min="0.5" step="0.5" oninput="updateChargeCalc()"><\/div>'+
+      '<div class="folio-form-group"><label>Unit Price (฿)<\/label>'+
+        '<input type="number" id="fc-price" value="'+up+'" min="0" oninput="updateChargeCalc()"><\/div>'+
+      '<div class="folio-form-group"><label>Amount (฿)<\/label>'+
+        '<input type="number" id="fc-amount" value="'+(qty*up)+'" min="0"><\/div>'+
+    '<\/div>'+
+    '<div class="folio-form-btns">'+
+      '<button class="btn btn-primary btn-sm" onclick="saveCharge(\''+resId+'\',\''+id+'\')">'+(ie?'Update':'Add Charge')+'<\/button>'+
+      '<button class="btn btn-outline btn-sm" onclick="cancelFolioMode()">Cancel<\/button>'+
+    '<\/div><\/div>';
+}
+
+function saveCharge(resId,chargeId){
+  const type=document.getElementById('fc-type').value;
+  const date=document.getElementById('fc-date').value;
+  const desc=document.getElementById('fc-desc').value.trim();
+  const qty=parseFloat(document.getElementById('fc-qty').value)||1;
+  const unitPrice=parseFloat(document.getElementById('fc-price').value)||0;
+  const amount=parseFloat(document.getElementById('fc-amount').value)||(qty*unitPrice);
+  if(!desc){alert('Please enter a description.');return;}
+  const folio=getFolio(resId);
+  if(chargeId){
+    const i=folio.charges.findIndex(c=>c.id===chargeId);
+    if(i>=0)folio.charges[i]={id:chargeId,type,date,description:desc,qty,unitPrice,amount};
+  }else{
+    folio.charges.push({id:'ch_'+Date.now(),type,date,description:desc,qty,unitPrice,amount});
+  }
+  saveFoliosLocal();syncFolioToServer(resId);cancelFolioMode();
+}
+function deleteCharge(resId,chargeId){
+  if(!confirm('Delete this charge?'))return;
+  getFolio(resId).charges=getFolio(resId).charges.filter(c=>c.id!==chargeId);
+  saveFoliosLocal();syncFolioToServer(resId);renderFolioModal();
+}
+
+function renderPaymentForm(p,resId){
+  const ie=p!==null,d=p?p.date:today(),desc=p?p.description:'Deposit';
+  const method=p?p.method:'Cash',amount=p?p.amount:0,id=p?p.id:'';
+  const descOpts=['Deposit','Advance Payment','OTA Prepaid','Partial Payment','Final Payment','Other'];
+  const methodOpts=['Cash','Credit Card','Bank Transfer','OTA (Prepaid)','Collect from Guest','Other'];
+  return '<div class="folio-form" style="border-color:var(--available)">'+
+    '<div class="folio-form-row">'+
+      '<div class="folio-form-group"><label>Date<\/label>'+
+        '<input type="date" id="fp-date" value="'+d+'"><\/div>'+
+      '<div class="folio-form-group folio-form-wide"><label>Description<\/label>'+
+        '<select id="fp-desc">'+
+          descOpts.map(o=>'<option'+(o===desc?' selected':'')+'>'+o+'<\/option>').join('')+
+        '<\/select><\/div>'+
+    '<\/div>'+
+    '<div class="folio-form-row">'+
+      '<div class="folio-form-group"><label>Method<\/label>'+
+        '<select id="fp-method">'+
+          methodOpts.map(o=>'<option'+(o===method?' selected':'')+'>'+o+'<\/option>').join('')+
+        '<\/select><\/div>'+
+      '<div class="folio-form-group"><label>Amount (฿)<\/label>'+
+        '<input type="number" id="fp-amount" value="'+amount+'" min="0"><\/div>'+
+    '<\/div>'+
+    '<div class="folio-form-btns">'+
+      '<button class="btn btn-primary btn-sm" onclick="savePayment(\''+resId+'\',\''+id+'\')">'+(ie?'Update':'Add Payment')+'<\/button>'+
+      '<button class="btn btn-outline btn-sm" onclick="cancelFolioMode()">Cancel<\/button>'+
+    '<\/div><\/div>';
+}
+
+function savePayment(resId,payId){
+  const date=document.getElementById('fp-date').value;
+  const desc=document.getElementById('fp-desc').value;
+  const method=document.getElementById('fp-method').value;
+  const amount=parseFloat(document.getElementById('fp-amount').value)||0;
+  if(amount<=0){alert('Please enter a valid amount.');return;}
+  const folio=getFolio(resId);
+  if(payId){
+    const i=folio.payments.findIndex(p=>p.id===payId);
+    if(i>=0)folio.payments[i]={id:payId,date,description:desc,method,amount};
+  }else{
+    folio.payments.push({id:'py_'+Date.now(),date,description:desc,method,amount});
+  }
+  saveFoliosLocal();syncFolioToServer(resId);cancelFolioMode();
+}
+function deletePayment(resId,payId){
+  if(!confirm('Delete this payment?'))return;
+  getFolio(resId).payments=getFolio(resId).payments.filter(p=>p.id!==payId);
+  saveFoliosLocal();syncFolioToServer(resId);renderFolioModal();
+}
+
+function renderFolioModal(){
+  const resId=_folioResId;if(!resId)return;
+  const res=reservations.find(r=>r.id===resId);if(!res)return;
+  const folio=getFolio(resId),tot=folioTotals(resId),n=nights(res.checkin,res.checkout);
+  const roomObj=ROOMS.find(r=>r.num===res.room);
+  document.getElementById('folioModalTitle').textContent='Guest Folio \u2014 Room '+res.room;
+
+  let h='<div class="folio-guest-info">'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Guest<\/span><span class="folio-val">'+esc(res.guest)+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Room<\/span><span class="folio-val">'+esc(res.room)+(roomObj?' \u00b7 '+esc(roomObj.type):'')+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Phone<\/span><span class="folio-val">'+(res.phone?esc(res.phone):'\u2014')+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Check-in<\/span><span class="folio-val">'+fmtDate(res.checkin)+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Check-out<\/span><span class="folio-val">'+fmtDate(res.checkout)+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Nights<\/span><span class="folio-val">'+n+'<\/span><\/div>'+
+  '<\/div>';
+
+  // CHARGES
+  h+='<div class="folio-sec-title">CHARGES'+
+    '<button class="btn btn-sm btn-blue" onclick="setFolioMode(\'addCharge\')">+ Add Charge<\/button><\/div>';
+  if(_folioMode==='addCharge')h+=renderChargeForm(null,resId);
+  h+='<table class="folio-tbl"><thead><tr>'+
+    '<th>Date<\/th><th>Description<\/th><th class="r">Qty<\/th>'+
+    '<th class="r">Rate (฿)<\/th><th class="r">Amount (฿)<\/th><th><\/th>'+
+  '<\/tr><\/thead><tbody>';
+  if(!folio.charges.length)h+=
+    '<tr><td colspan="6" class="folio-empty">No charges yet. Room charge is added automatically when a nightly rate is set on the reservation.<\/td><\/tr>';
+  folio.charges.forEach(c=>{
+    if(_folioMode==='editCharge'&&_folioEditId===c.id){
+      h+='<tr><td colspan="6">'+renderChargeForm(c,resId)+'<\/td><\/tr>';
+    }else{
+      h+='<tr>'+
+        '<td>'+fmtDate(c.date)+'<\/td>'+
+        '<td>'+esc(c.description)+'<span class="folio-type-badge folio-type-'+c.type+'">'+c.type+'<\/span><\/td>'+
+        '<td class="r">'+c.qty+'<\/td>'+
+        '<td class="r">'+Number(c.unitPrice).toLocaleString('en-US')+'<\/td>'+
+        '<td class="r fw">'+Number(c.amount).toLocaleString('en-US')+'<\/td>'+
+        '<td class="folio-act">'+
+          '<button class="btn btn-sm btn-outline" onclick="setFolioMode(\'editCharge\',\''+c.id+'\')">&#9998;<\/button> '+
+          '<button class="btn btn-sm btn-danger" onclick="deleteCharge(\''+resId+'\',\''+c.id+'\')">&#128465;<\/button>'+
+        '<\/td><\/tr>';
+    }
+  });
+  h+='<\/tbody><tfoot><tr>'+
+    '<td colspan="4" class="r fw">Subtotal<\/td>'+
+    '<td class="r" style="font-size:1rem;color:var(--navy)">\u0e3f'+tot.charges.toLocaleString('en-US')+'<\/td>'+
+    '<td><\/td><\/tr><\/tfoot><\/table>';
+
+  // PAYMENTS
+  h+='<div class="folio-sec-title" style="margin-top:18px">PAYMENTS \/ DEPOSITS'+
+    '<button class="btn btn-sm" style="background:#d1fae5;color:#065f46" onclick="setFolioMode(\'addPayment\')">+ Add Payment<\/button><\/div>';
+  if(_folioMode==='addPayment')h+=renderPaymentForm(null,resId);
+  h+='<table class="folio-tbl"><thead><tr>'+
+    '<th>Date<\/th><th>Description<\/th><th>Method<\/th><th class="r">Amount (฿)<\/th><th><\/th>'+
+  '<\/tr><\/thead><tbody>';
+  if(!folio.payments.length)h+=
+    '<tr><td colspan="5" class="folio-empty">No payments recorded yet.<\/td><\/tr>';
+  folio.payments.forEach(p=>{
+    if(_folioMode==='editPayment'&&_folioEditId===p.id){
+      h+='<tr><td colspan="5">'+renderPaymentForm(p,resId)+'<\/td><\/tr>';
+    }else{
+      h+='<tr>'+
+        '<td>'+fmtDate(p.date)+'<\/td>'+
+        '<td>'+esc(p.description)+'<\/td>'+
+        '<td>'+esc(p.method)+'<\/td>'+
+        '<td class="r fw" style="color:var(--available)">\u0e3f'+Number(p.amount).toLocaleString('en-US')+'<\/td>'+
+        '<td class="folio-act">'+
+          '<button class="btn btn-sm btn-outline" onclick="setFolioMode(\'editPayment\',\''+p.id+'\')">&#9998;<\/button> '+
+          '<button class="btn btn-sm btn-danger" onclick="deletePayment(\''+resId+'\',\''+p.id+'\')">&#128465;<\/button>'+
+        '<\/td><\/tr>';
+    }
+  });
+  h+='<\/tbody><tfoot><tr>'+
+    '<td colspan="3" class="r fw">Total Paid<\/td>'+
+    '<td class="r" style="font-size:1rem;color:var(--available)">\u0e3f'+tot.payments.toLocaleString('en-US')+'<\/td>'+
+    '<td><\/td><\/tr><\/tfoot><\/table>';
+
+  // BALANCE
+  const settled=tot.balance===0;
+  const bStyle=tot.balance>0?
+    'border-color:var(--occupied);color:var(--occupied);background:#fdf3ee':
+    settled?'border-color:var(--available);color:var(--available);background:#edf7f1':
+    'border-color:var(--reserved);color:var(--reserved);background:#e8f0fb';
+  const bLabel=tot.balance>0?'BALANCE DUE':settled?'\u2705 SETTLED':'\u21A9 OVERPAID';
+  h+='<div class="folio-balance" style="'+bStyle+'">'+
+    '<span>'+bLabel+'<\/span>'+
+    '<span style="font-size:1.25rem">\u0e3f'+Math.abs(tot.balance).toLocaleString('en-US')+'<\/span>'+
+  '<\/div>';
+  h+='<div class="folio-print-bar">'+
+    '<button class="btn btn-primary" onclick="printFolio(\''+resId+'\')">\ud83d\udda8\ufe0f Print Folio<\/button> '+
+    '<button class="btn btn-blue" onclick="printReceipt(\''+resId+'\')">\ud83e\uddfe Print Receipt<\/button>'+
+  '<\/div>';
+
+  document.getElementById('folioModalBody').innerHTML=h;
+}
+
+function _folioCSS(){
+  return '@page{size:A4;margin:18mm}*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1a1a1a}'+
+    '.lh{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10pt;border-bottom:2pt solid #1B3A6B;margin-bottom:13pt}'+
+    '.logo{height:52pt;width:auto}.pi{text-align:right;font-size:8.5pt;color:#444;line-height:1.65}'+
+    '.pi-name{font-size:13pt;font-weight:bold;color:#1B3A6B;margin-bottom:2pt}'+
+    '.doc-title{text-align:center;font-size:17pt;font-weight:bold;color:#1B3A6B;margin:8pt 0 3pt;letter-spacing:2pt}'+
+    '.doc-sub{text-align:center;font-size:8.5pt;color:#666;margin-bottom:11pt}'+
+    '.gi{background:#f5f8ff;border:1pt solid #c5d4ea;border-radius:4pt;padding:9pt;margin-bottom:13pt}'+
+    '.gi-grid{display:grid;grid-template-columns:1fr 1fr;gap:4pt 20pt}'+
+    '.gi-row{display:flex;gap:5pt;font-size:9.5pt;padding:1pt 0}'+
+    '.gi-l{color:#6B7A99;min-width:60pt}.gi-v{font-weight:bold}'+
+    '.sec-hdr{font-size:9.5pt;font-weight:bold;color:#1B3A6B;border-bottom:1pt solid #c5d4ea;'+
+      'padding-bottom:3pt;margin-bottom:7pt;letter-spacing:1pt;text-transform:uppercase}'+
+    '.pt{width:100%;border-collapse:collapse;font-size:9pt}'+
+    '.pt th{background:#1B3A6B;color:#fff;padding:5pt 7pt;text-align:left;font-size:8pt}'+
+    '.pt th.r,.pt td.r{text-align:right}'+
+    '.pt td{padding:4pt 7pt;border-bottom:1pt solid #e8eef8}'+
+    '.pt tbody tr:nth-child(even) td{background:#f9fbff}'+
+    '.pt tfoot td{font-weight:bold;padding:6pt 7pt;border-top:2pt solid #1B3A6B}'+
+    '.sub td{background:#eef3fa!important}'+
+    '.sigs{display:flex;gap:36pt;margin-top:26pt}'+
+    '.sig{flex:1;text-align:center;font-size:8.5pt;color:#666}'+
+    '.sig-line{border-bottom:1pt solid #333;height:26pt;margin-bottom:3pt}'+
+    '.ftr{text-align:center;font-size:8pt;color:#999;margin-top:12pt;font-style:italic}';
+}
+
+function generateFolioHTML(resId,isReceipt){
+  const res=reservations.find(r=>r.id===resId);if(!res)return'';
+  const folio=getFolio(resId),tot=folioTotals(resId),n=nights(res.checkin,res.checkout);
+  const dateNow=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const roomObj=ROOMS.find(r=>r.num===res.room);
+
+  let chargesHTML='';
+  if(!isReceipt){
+    chargesHTML='<h3 class="sec-hdr">CHARGES<\/h3>'+
+      '<table class="pt"><thead><tr>'+
+      '<th>Date<\/th><th>Description<\/th><th class="r">Qty<\/th><th class="r">Rate<\/th><th class="r">Amount (\u0e3f)<\/th>'+
+      '<\/tr><\/thead><tbody>';
+    if(!folio.charges.length)chargesHTML+='<tr><td colspan="5" style="text-align:center;font-style:italic;color:#888">No charges<\/td><\/tr>';
+    folio.charges.forEach(c=>{
+      chargesHTML+='<tr><td>'+fmtDate(c.date)+'<\/td><td>'+c.description+'<\/td>'+
+        '<td class="r">'+c.qty+'<\/td><td class="r">'+Number(c.unitPrice).toLocaleString('en-US')+'<\/td>'+
+        '<td class="r">'+Number(c.amount).toLocaleString('en-US')+'<\/td><\/tr>';
+    });
+    chargesHTML+='<\/tbody><tfoot><tr class="sub">'+
+      '<td colspan="4">Subtotal<\/td><td class="r">\u0e3f'+tot.charges.toLocaleString('en-US')+'<\/td>'+
+      '<\/tr><\/tfoot><\/table>';
+  }
+
+  let pHTML='<h3 class="sec-hdr" style="margin-top:16pt">'+(isReceipt?'PAYMENT SUMMARY':'PAYMENTS \/ DEPOSITS')+'<\/h3>'+
+    '<table class="pt"><thead><tr>'+
+    '<th>Date<\/th><th>Description<\/th><th>Method<\/th><th class="r">Amount (\u0e3f)<\/th>'+
+    '<\/tr><\/thead><tbody>';
+  if(!folio.payments.length)pHTML+='<tr><td colspan="4" style="text-align:center;font-style:italic;color:#888">No payments<\/td><\/tr>';
+  folio.payments.forEach(p=>{
+    pHTML+='<tr><td>'+fmtDate(p.date)+'<\/td><td>'+p.description+'<\/td><td>'+p.method+'<\/td>'+
+      '<td class="r">\u0e3f'+Number(p.amount).toLocaleString('en-US')+'<\/td><\/tr>';
+  });
+  pHTML+='<\/tbody><tfoot><tr class="sub">'+
+    '<td colspan="3">Total Paid<\/td><td class="r">\u0e3f'+tot.payments.toLocaleString('en-US')+'<\/td>'+
+    '<\/tr><\/tfoot><\/table>';
+
+  const settled=tot.balance===0;
+  const bc=tot.balance>0?'#C4622D':settled?'#2E8B57':'#1B3A6B';
+  const bb=tot.balance>0?'#fdf3ee':settled?'#edf7f1':'#e8f0fb';
+  const balLabel=tot.balance>0?'BALANCE DUE':settled?'PAID IN FULL':'REFUND DUE';
+  const balHTML='<div style="display:flex;justify-content:space-between;align-items:center;'+
+    'margin-top:14pt;padding:10pt 14pt;border:2pt solid '+bc+';border-radius:5pt;background:'+bb+'">'+
+    '<span style="font-size:12pt;font-weight:bold;color:'+bc+'">'+balLabel+'<\/span>'+
+    '<span style="font-size:16pt;font-weight:bold;color:'+bc+'">\u0e3f'+Math.abs(tot.balance).toLocaleString('en-US')+'<\/span>'+
+  '<\/div>';
+  const stamp=isReceipt&&settled?
+    '<div style="text-align:center;margin:12pt 0">'+
+    '<span style="display:inline-block;font-size:20pt;font-weight:bold;color:#2E8B57;'+
+      'border:3pt solid #2E8B57;border-radius:5pt;padding:5pt 18pt;transform:rotate(-4deg)">&check; PAID IN FULL<\/span><\/div>':'';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>'+(isReceipt?'Receipt':'Folio')+' \u2014 Room '+res.room+'<\/title>'+
+    '<style>'+_folioCSS()+'<\/style><\/head><body>'+
+    '<div class="lh">'+
+      '<img src="data:image\/jpeg;base64,'+LOGO_B64+'" class="logo">'+
+      '<div class="pi">'+
+        '<div class="pi-name">THE BARN HUA HIN<\/div>'+
+        '<div>648 Wangpong 4, Pranburi, Prachuapkirikhan 77120<\/div>'+
+        '<div>Tel: +66(0)32 900 432 &nbsp;&middot;&nbsp; +66(0)622 363 632<\/div>'+
+        '<div>Line: @thebarnhuahin &nbsp;&middot;&nbsp; thebarnhuahin@gmail.com<\/div>'+
+      '<\/div>'+
+    '<\/div>'+
+    '<div class="doc-title">'+(isReceipt?'PAYMENT RECEIPT':'GUEST FOLIO')+'<\/div>'+
+    '<div class="doc-sub">Date: '+dateNow+' &nbsp;|&nbsp; Ref: '+resId+'<\/div>'+
+    '<div class="gi"><div class="gi-grid">'+
+      '<div class="gi-row"><span class="gi-l">Guest<\/span><span class="gi-v">'+res.guest+'<\/span><\/div>'+
+      '<div class="gi-row"><span class="gi-l">Room<\/span><span class="gi-v">'+res.room+(roomObj?' \u00b7 '+roomObj.type:'')+'<\/span><\/div>'+
+      '<div class="gi-row"><span class="gi-l">Phone<\/span><span class="gi-v">'+(res.phone||'\u2014')+'<\/span><\/div>'+
+      '<div class="gi-row"><span class="gi-l">Nights<\/span><span class="gi-v">'+n+'<\/span><\/div>'+
+      '<div class="gi-row"><span class="gi-l">Check-in<\/span><span class="gi-v">'+fmtDate(res.checkin)+'<\/span><\/div>'+
+      '<div class="gi-row"><span class="gi-l">Check-out<\/span><span class="gi-v">'+fmtDate(res.checkout)+'<\/span><\/div>'+
+    '<\/div><\/div>'+
+    chargesHTML+pHTML+balHTML+stamp+
+    '<div class="sigs">'+
+      '<div class="sig"><div class="sig-line"><\/div><div>Guest Signature<\/div><\/div>'+
+      '<div class="sig"><div class="sig-line"><\/div><div>Authorized By<\/div><\/div>'+
+    '<\/div>'+
+    '<div class="ftr">Thank you for choosing The Barn Hua Hin. We hope to welcome you again soon.<\/div>'+
+  '<\/body><\/html>';
+}
+
+function printFolio(resId){
+  const blob=new Blob([generateFolioHTML(resId,false)],{type:'text\/html'});
+  window.open(URL.createObjectURL(blob),'_blank');
+}
+function printReceipt(resId){
+  const blob=new Blob([generateFolioHTML(resId,true)],{type:'text\/html'});
+  window.open(URL.createObjectURL(blob),'_blank');
+}
+
+
 // ===================== INIT =====================
 const now=new Date();
 document.getElementById('todayBadge').textContent=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1916,6 +2313,7 @@ const tmrStr = tmr.getFullYear()+'-'+String(tmr.getMonth()+1).padStart(2,'0')+'-
 document.getElementById('f-checkout').value=tmrStr;
 populateRoomSel();renderDash();
 loadFromSheets();
+loadFoliosFromSheets();
 loadHousekeeping();
 setInterval(loadHousekeeping, 60000);
 checkLogin();

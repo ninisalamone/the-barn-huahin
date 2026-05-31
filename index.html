@@ -54,12 +54,14 @@
   .cat-block{margin-bottom:24px}
   .cat-lbl{font-size:0.72rem;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
   .rooms-row{display:flex;flex-wrap:wrap;gap:10px}
-  .rchip{background:var(--white);border:2px solid var(--border);border-radius:10px;padding:10px 12px;min-width:80px;text-align:center;cursor:pointer;transition:all .2s}
+  .rchip{background:var(--white);border:2px solid var(--border);border-radius:10px;padding:10px 12px;min-width:80px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
   .rchip:hover{transform:translateY(-2px);box-shadow:0 4px 12px var(--shadow)}
   .rchip.available{border-color:var(--available);background:#edf7f1}
   .rchip.occupied {border-color:var(--occupied); background:#fdf3ee}
   .rchip.reserved {border-color:var(--reserved); background:#e8f0fb}
   .rnum{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--navy-dark)}
+  .next-flag{display:inline-block;font-size:0.8rem;font-weight:700;color:var(--reserved);vertical-align:top;margin-left:2px;cursor:help}
+  .hk-flag{position:absolute;top:3px;right:4px;font-size:0.62rem;line-height:1;background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:1px 3px;cursor:help}
   .rdot{width:8px;height:8px;border-radius:50%;margin:4px auto 0;background:var(--border)}
   .rchip.available .rdot{background:var(--available)}
   .rchip.occupied  .rdot{background:var(--occupied)}
@@ -488,6 +490,7 @@
   .rg-bar.bar-occ   { background:var(--occupied); }
   .rg-bar.bar-res   { background:var(--reserved); }
   .rg-bar.bar-in    { background:var(--available); }
+  .rg-bar.bar-out   { background:#f59e0b; }
   .rg-bar .rg-pet   { margin-left:3px; font-size:0.65rem; }
   .rg-bar-start { border-radius:3px 0 0 3px; }
   .rg-bar-end   { border-radius:0 3px 3px 0; }
@@ -563,6 +566,7 @@
     <div class="legend-item"><div class="ldot" style="background:var(--available)"></div>Available</div>
     <div class="legend-item"><div class="ldot" style="background:var(--occupied)"></div>Checked-In</div>
     <div class="legend-item"><div class="ldot" style="background:var(--reserved)"></div>Reserved</div>
+    <div class="legend-item"><span style="font-size:0.7rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:1px 3px">🧹</span>Needs cleaning</div>
   </div>
   <div id="roomGrid"></div>
 </div>
@@ -582,7 +586,7 @@
           <option value="">— Select Source —</option>
           <option>Walk-in</option><option>Phone</option><option>Line</option>
           <option>Booking.com</option><option>Agoda</option><option>Expedia</option>
-          <option>Traveloka</option><option>Airbnb</option><option>Other</option>
+          <option>Traveloka</option><option>Airbnb</option><option>Facebook</option><option>Other</option>
         </select>
       </div>
       <div class="fgrp"><label><span data-key="telephone">Telephone</span></label><input type="tel" id="f-phone" placeholder="+66 ..."></div>
@@ -592,7 +596,7 @@
         <select id="f-payment">
           <option value="">— Select —</option>
           <option>Cash</option><option>Credit Card</option><option>Bank Transfer</option>
-          <option>OTA (Prepaid)</option><option>Other</option>
+          <option>OTA (Prepaid)</option><option>Collect from Guest</option><option>Other</option>
         </select>
       </div>
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-breakfast"><span data-key="breakfast">🍳 Include Breakfast</span></div></label></div>
@@ -765,7 +769,7 @@ const LANG = {
     dashboard:'Dashboard', newbooking:'New Booking', reservations:'Reservations',
     floorplan:'Floor Plan', roomgrid:'Room Grid', report:'Report',
     available:'Available', checkedin:'Checked-In', reserved:'Reserved',
-    arrivals:'Arrivals Today', departures:'Departures Today', totalrooms:'Total Rooms',
+    arrivals:'Arrivals Today', departures:'Departures Today', totalrooms:'Total Rooms', toclean:'To Clean',
     roomoverview:'🏘️ Room Status Overview',
     guestname:'Guest Name', firstname:'First Name', lastname:'Last Name', telephone:'Telephone', checkin:'Check-In Date',
     checkout:'Check-Out Date', room:'Room', source:'Booking Source',
@@ -789,7 +793,7 @@ const LANG = {
     dashboard:'หน้าหลัก', newbooking:'จองห้อง', reservations:'การจอง',
     floorplan:'ผังห้อง', roomgrid:'ตารางห้อง', report:'รายงาน',
     available:'ว่าง', checkedin:'เช็คอินแล้ว', reserved:'จองแล้ว',
-    arrivals:'เช็คอินวันนี้', departures:'เช็คเอาต์วันนี้', totalrooms:'ห้องทั้งหมด',
+    arrivals:'เช็คอินวันนี้', departures:'เช็คเอาต์วันนี้', totalrooms:'ห้องทั้งหมด', toclean:'รอทำความสะอาด',
     roomoverview:'🏘️ สถานะห้องพัก',
     guestname:'ชื่อแขก', firstname:'ชื่อ', lastname:'นามสกุล', telephone:'เบอร์โทร', checkin:'วันเช็คอิน',
     checkout:'วันเช็คเอาต์', room:'ห้อง', source:'ช่องทางการจอง',
@@ -845,6 +849,69 @@ const CATS=[
 let reservations=JSON.parse(localStorage.getItem('barnReservations')||'[]');
 let editingId=null;
 let sheetsLoaded=false; // Track if we've loaded from sheets
+
+// ===================== HOUSEKEEPING (Clean / Dirty) =====================
+// Syncs across devices via its OWN Apps Script web app (separate from bookings).
+// Paste your Housekeeping web-app URL below. If left blank, it falls back to
+// local-only (this device) so the app keeps working either way.
+const GS_HK_URL='https://script.google.com/macros/s/AKfycbzuK7bz6r5dr6bPwnI1IMHTJ6-Mvszl0HlSzM0sF_y9AzpqJsc6PTgZCNAXgHiEv-g8Hw/exec'; // ← paste your Housekeeping web-app /exec URL here
+
+let housekeeping=JSON.parse(localStorage.getItem('barnHousekeeping')||'{}');
+function hkStatus(n){ return housekeeping[n]==='dirty' ? 'dirty' : 'clean'; }
+function saveHk(){ localStorage.setItem('barnHousekeeping',JSON.stringify(housekeeping)); }
+
+// Push a single room's status to the shared sheet (no-op if URL not set)
+function pushHk(room,status){
+  if(!GS_HK_URL) return;
+  const payload=JSON.stringify({action:'set',room:String(room),status:status});
+  try{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',GS_HK_URL,true);
+    xhr.setRequestHeader('Content-Type','text/plain');
+    xhr.onerror=function(){ try{ fetch(GS_HK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload}); }catch(e){} };
+    xhr.send(payload);
+  }catch(e){ try{ fetch(GS_HK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload}); }catch(_){} }
+}
+// Pull the shared map and refresh the screen
+function loadHousekeeping(){
+  if(!GS_HK_URL) return;
+  fetch(GS_HK_URL+'?action=load')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data&&data.status==='ok'&&data.housekeeping){
+        housekeeping=data.housekeeping||{};
+        saveHk();
+        renderDash();
+        const av=document.querySelector('.view.active');
+        if(av&&av.id==='view-floorplan') renderFloorPlan();
+      }
+    }).catch(()=>{});
+}
+function setDirty(n){ housekeeping[n]='dirty'; saveHk(); pushHk(n,'dirty'); }
+function innerHkHtml(n){
+  const s=hkStatus(n);
+  const label = s==='dirty'
+    ? '<span style="color:#b45309;font-weight:700">⚠ Dirty — needs cleaning</span>'
+    : '<span style="color:#15803d;font-weight:700">✓ Clean — ready</span>';
+  return '<div class="drow"><span class="dkey">Housekeeping</span><span class="dval">'+label+'</span></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-sm '+(s==='clean'?'btn-primary':'btn-outline')+'" onclick="markHk(\''+n+'\',\'clean\')">✓ Mark Clean</button>'+
+      '<button class="btn btn-sm '+(s==='dirty'?'btn-primary':'btn-outline')+'" onclick="markHk(\''+n+'\',\'dirty\')">🧹 Mark Dirty</button>'+
+    '</div>';
+}
+function hkBlock(n){
+  return '<div style="margin:14px 0 4px;font-weight:600;color:var(--navy);font-size:0.85rem">HOUSEKEEPING</div>'+
+    '<div id="hkSection">'+innerHkHtml(n)+'</div>';
+}
+function markHk(n,val){
+  if(val==='clean'){ delete housekeeping[n]; } else { housekeeping[n]='dirty'; }
+  saveHk();
+  pushHk(n, val==='clean'?'clean':'dirty');
+  const sec=document.getElementById('hkSection'); if(sec) sec.innerHTML=innerHkHtml(n);
+  renderDash();
+  const av=document.querySelector('.view.active');
+  if(av&&av.id==='view-floorplan') renderFloorPlan();
+}
 
 const GS_URL='https://script.google.com/macros/s/AKfycbygs5_umSJr4cswcmKkKaTDbvODBYBSfa27qMNg1O5JApkVMTdz5IoB0-4iex6j2Ytc/exec';
 
@@ -978,24 +1045,34 @@ function nights(ci,co){
   return Math.max(0,Math.round((db-da)/86400000));
 }
 
+function dOnly(x){ return String(x==null?'':x).split('T')[0]; }
+
 function getRoomStatus(n){
   const tod=today();
-  // Currently checked in
-  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
+  // Currently in-house: checked in and not yet departed (INCLUDES the departure day,
+  // so a guest leaving today still shows occupied until staff actually check them out)
+  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&dOnly(r.checkin)<=tod&&dOnly(r.checkout)>=tod);
   if(a) return 'occupied';
   // Reserved and arriving today or overdue
-  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&r.checkin<=tod&&r.checkout>tod);
+  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&dOnly(r.checkin)<=tod&&dOnly(r.checkout)>tod);
   if(b) return 'reserved';
-  // Available — future bookings don't affect dashboard/floor plan
+  // Available — future bookings don't change today's status
   return 'available';
 }
 function getActiveRes(n){
   const tod=today();
-  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&r.checkin<=tod&&r.checkout>tod);
+  const a=reservations.find(r=>r.room===n&&r.status==='Checked-In'&&dOnly(r.checkin)<=tod&&dOnly(r.checkout)>=tod);
   if(a) return a;
-  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&r.checkin<=tod&&r.checkout>tod);
+  const b=reservations.find(r=>r.room===n&&r.status==='Reserved'&&dOnly(r.checkin)<=tod&&dOnly(r.checkout)>tod);
   if(b) return b;
   return null;
+}
+// Soonest future booking for a room (for the "next guest" tooltip)
+function getUpcomingRes(n, excludeId){
+  const tod=today();
+  return reservations
+    .filter(r=>r.room===n&&r.status!=='Cancelled'&&r.status!=='Checked-Out'&&(!excludeId||r.id!==excludeId)&&dOnly(r.checkin)>=tod)
+    .sort((a,b)=>dOnly(a.checkin)<dOnly(b.checkin)?-1:1)[0]||null;
 }
 function getResForDate(roomNum, dateStr){
   return reservations.find(r=>
@@ -1012,13 +1089,14 @@ function showView(v){
   document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(v))b.classList.add('active')});
-  if(v==='dashboard')renderDash();
+  if(v==='dashboard'){renderDash();loadHousekeeping();}
   if(v==='reservations'){renderRes();populateFilterRoom()}
   if(v==='booking'){populateRoomSel();if(!editingId)clearForm()}
   if(v==='floorplan'){
     const lbl = document.getElementById('fpTodayLabel');
     if(lbl) lbl.textContent = '— As of today: '+new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
     renderFloorPlan();
+    loadHousekeeping();
   }
   if(v==='report')renderReport();
   if(v==='roomgrid') renderRoomGrid();
@@ -1027,6 +1105,7 @@ function showView(v){
 function renderDash(){
   const tod=today();let av=0,oc=0,rs=0;
   ROOMS.forEach(r=>{const s=getRoomStatus(r.num);if(s==='available')av++;else if(s==='occupied')oc++;else rs++});
+  const dirty=ROOMS.filter(x=>hkStatus(x.num)==='dirty').length;
   const ci=reservations.filter(r=>r.checkin===tod&&(r.status==='Reserved'||r.status==='Checked-In')).length;
   const co=reservations.filter(r=>r.checkout===tod&&r.status==='Checked-In').length;
   document.getElementById('statsGrid').innerHTML=
@@ -1035,17 +1114,22 @@ function renderDash(){
     '<div class="stat-card reserved"><div class="stat-num">'+rs+'</div><div class="stat-lbl">'+t('reserved')+'</div></div>'+
     '<div class="stat-card"><div class="stat-num" style="color:var(--available)">'+ci+'</div><div class="stat-lbl">'+t('arrivals')+'</div></div>'+
     '<div class="stat-card"><div class="stat-num" style="color:var(--occupied)">'+co+'</div><div class="stat-lbl">'+t('departures')+'</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:#d97706">'+dirty+'</div><div class="stat-lbl">'+t('toclean')+'</div></div>'+
     '<div class="stat-card"><div class="stat-num">'+ROOMS.length+'</div><div class="stat-lbl">'+t('totalrooms')+'</div></div>';
   let h='';
   CATS.forEach(cat=>{
     h+='<div class="cat-block"><div class="cat-lbl">'+cat.label+'</div><div class="rooms-row">';
     ROOMS.filter(r=>r.type===cat.type).forEach(r=>{
       const st=getRoomStatus(r.num),res=getActiveRes(r.num);
+      const upc=getUpcomingRes(r.num, res?res.id:null);
+      const departingToday = res && res.status==='Checked-In' && dOnly(res.checkout)===tod;
+      const nextHtml = upc ? '<hr class="tt-divider"><div class="tt-line"><span class="tt-key">Next guest</span><span class="tt-val">'+upc.guest+'</span></div><div class="tt-line"><span class="tt-key">Arrives</span><span class="tt-val">'+fmtDate(upc.checkin)+'</span></div>' : '';
       let tip='';
       if(res){
         const n=nights(res.checkin,res.checkout);
         const rate=parseFloat(res.rate)||0;
         tip='<div class="tooltip">'+
+          (departingToday?'<div style="color:#f59e0b;font-weight:600;margin-bottom:4px">⏳ Departing today</div>':'')+
           '<div class="tt-line"><span class="tt-key">Guest</span><span class="tt-val">'+res.guest+'</span></div>'+
           '<div class="tt-line"><span class="tt-key">Check-in</span><span class="tt-val">'+fmtDate(res.checkin)+'</span></div>'+
           '<div class="tt-line"><span class="tt-key">Check-out</span><span class="tt-val">'+fmtDate(res.checkout)+'</span></div>'+
@@ -1053,11 +1137,12 @@ function renderDash(){
           (rate?'<div class="tt-line"><span class="tt-key">Rate/Night</span><span class="tt-val">฿'+rate.toLocaleString()+'</span></div>':'')+
           (rate?'<div class="tt-line"><span class="tt-key">Total</span><span class="tt-val">฿'+(rate*n).toLocaleString()+'</span></div>':'')+
           (res.pet?'<hr class="tt-divider"><div class="tt-line"><span class="tt-key">🐾 Pet</span><span class="tt-val">Yes</span></div>':'')+
+          nextHtml+
         '</div>';
       }else{
-        tip='<div class="tooltip"><div style="color:var(--available);font-weight:600">Available</div></div>';
+        tip='<div class="tooltip"><div style="color:var(--available);font-weight:600">Available</div>'+nextHtml+'</div>';
       }
-      h+='<div class="tt-wrap"><div class="rchip '+st+'" onclick="showRoomDetail(\''+r.num+'\')"><div class="rnum">'+r.num+'</div><div class="rdot"></div><div class="rguest">'+(res?res.guest.split(' ')[0]:'')+(res&&res.pet?' 🐾':'')+'</div></div>'+tip+'</div>';
+      h+='<div class="tt-wrap"><div class="rchip '+st+'" onclick="showRoomDetail(\''+r.num+'\')">'+(hkStatus(r.num)==='dirty'?'<div class="hk-flag" title="Needs cleaning">🧹</div>':'')+'<div class="rnum">'+r.num+(upc?'<span class="next-flag" title="Next: '+upc.guest+' — '+fmtDate(upc.checkin)+'">›</span>':'')+'</div><div class="rdot"></div><div class="rguest">'+(res?res.guest.split(' ')[0]:'')+(res&&res.pet?' 🐾':'')+'</div></div>'+tip+'</div>';
     });
     h+='</div></div>';
   });
@@ -1082,6 +1167,7 @@ function showRoomDetailWithRes(roomNum, res){
   let b='<div class="drow"><span class="dkey">Status</span><span class="dval">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span></div>'+
     '<div class="drow"><span class="dkey">Type</span><span class="dval">'+room.type+'</span></div>'+
     '<div class="drow"><span class="dkey">Max Guests</span><span class="dval">'+room.maxGuest+' persons'+(room.extraBed?' + 1 extra bed':'')+'</span></div>'+
+    hkBlock(roomNum)+
     '<div style="margin:12px 0 8px;font-weight:600;color:var(--navy);font-size:0.85rem">RESERVATION</div>'+
     '<div class="drow"><span class="dkey">Guest</span><span class="dval">'+res.guest+'</span></div>'+
     '<div class="drow"><span class="dkey">Phone</span><span class="dval">'+(res.phone||'—')+'</span></div>'+
@@ -1109,7 +1195,7 @@ function showRoomDetail(n){
   document.getElementById('rmTitle').textContent='Room '+n+' — '+room.type;
   let b='<div class="drow"><span class="dkey">Status</span><span class="dval">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span></div>'+
     '<div class="drow"><span class="dkey">Type</span><span class="dval">'+room.type+'</span></div>'+
-    '<div class="drow"><span class="dkey">Max Guests</span><span class="dval">'+room.maxGuest+' persons'+(room.extraBed?' + 1 extra bed':'')+'</span></div>';
+    '<div class="drow"><span class="dkey">Max Guests</span><span class="dval">'+room.maxGuest+' persons'+(room.extraBed?' + 1 extra bed':'')+'</span></div>'+hkBlock(n);
   if(res){
     b+='<div style="margin:12px 0 8px;font-weight:600;color:var(--navy);font-size:0.85rem">CURRENT RESERVATION</div>'+
       '<div class="drow"><span class="dkey">Guest</span><span class="dval">'+res.guest+'</span></div>'+
@@ -1347,7 +1433,7 @@ function renderRes(){
 }
 
 function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();renderDash();renderRes()}}
-function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';save();renderDash();renderRes()}}
+function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';setDirty(r.room);save();renderDash();renderRes()}}
 function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1424,27 +1510,22 @@ function renderFloorPlan() {
       .replace('Pool Villa 3BR','Villa 3BR')
       .replace('Family Suite','Family')
       .replace('Junior Suite','Junior');
+    const upc = getUpcomingRes(room.num, res?res.id:null);
+    const fpNext = upc ? '<hr class="tt-divider"><div class="tt-line"><span class="tt-key">Next guest</span><span class="tt-val">'+upc.guest+'</span></div><div class="tt-line"><span class="tt-key">Arrives</span><span class="tt-val">'+fmtDate(upc.checkin)+'</span></div>' : '';
     let tip = '';
     if(res){
+      const fpDep = res.status==='Checked-In' && dOnly(res.checkout)===today();
       tip = '<div class="tooltip">'+
+        (fpDep?'<div style="color:#f59e0b;font-weight:600;margin-bottom:4px">⏳ Departing today</div>':'')+
         '<div class="tt-line"><span class="tt-key">Guest</span><span class="tt-val">'+res.guest+'</span></div>'+
         '<div class="tt-line"><span class="tt-key">Check-in</span><span class="tt-val">'+fmtDate(res.checkin)+'</span></div>'+
         '<div class="tt-line"><span class="tt-key">Check-out</span><span class="tt-val">'+fmtDate(res.checkout)+'</span></div>'+
         '<div class="tt-line"><span class="tt-key">Nights</span><span class="tt-val">'+nights(res.checkin,res.checkout)+'</span></div>'+
         (res.pet?'<hr class="tt-divider"><div class="tt-line"><span class="tt-key">🐾 Pet</span><span class="tt-val">Yes</span></div>':'')+
+        fpNext+
         '</div>';
     } else {
-      // Show reserved info if applicable
-      const futureRes = getActiveRes(room.num);
-      if(futureRes && st==='reserved'){
-        tip = '<div class="tooltip">'+
-          '<div style="color:#93c5fd;font-weight:600;margin-bottom:4px">Reserved</div>'+
-          '<div class="tt-line"><span class="tt-key">Guest</span><span class="tt-val">'+futureRes.guest+'</span></div>'+
-          '<div class="tt-line"><span class="tt-key">Arrives</span><span class="tt-val">'+fmtDate(futureRes.checkin)+'</span></div>'+
-          '</div>';
-      } else {
-        tip = '<div class="tooltip"><div style="color:#6ee7b7;font-weight:600">Available Today</div></div>';
-      }
+      tip = '<div class="tooltip"><div style="color:#6ee7b7;font-weight:600">Available Today</div>'+fpNext+'</div>';
     }
     h += `<div class="tt-wrap" style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.w}px;height:${pos.h}px">
       <div class="fp-room ${st}" style="width:100%;height:100%"
@@ -1549,7 +1630,7 @@ function renderRoomGrid(){
           const nextDs = nextD.getFullYear()+'-'+String(nextD.getMonth()+1).padStart(2,'0')+'-'+String(nextD.getDate()).padStart(2,'0');
             const isLast = nextDs >= co;
             cellData[d] = { res, isFirst, isLast,
-              status: res.status==='Checked-In' ? 'occ' : 'res' };
+              status: (res.status==='Checked-In'||res.status==='Checked-Out') ? 'occ' : 'res' };
           }
         }
         // Mark checkout day
@@ -1575,7 +1656,7 @@ function renderRoomGrid(){
         const dateStr = rgYear+'-'+String(rgMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
         if(cd && cd.res){
           const res = cd.res;
-          const barCls = cd.status==='occ'?'bar-occ':cd.status==='chkout'?'bar-occ':cd.status==='res'?'bar-res':'bar-in';
+          const barCls = cd.status==='occ'?'bar-occ':cd.status==='chkout'?'bar-out':cd.status==='res'?'bar-res':'bar-in';
           const posCls = cd.isFirst&&cd.isLast?'rg-bar':cd.isFirst?'rg-bar rg-bar-start':cd.isLast?'rg-bar rg-bar-end':'rg-bar rg-bar-mid';
           const nameStr = cd.isFirst ? res.guest.split(' ')[0] : '';
           const petStr = cd.isFirst && res.pet ? '<span class="rg-pet">🐾</span>' : '';
@@ -1822,6 +1903,8 @@ const tmrStr = tmr.getFullYear()+'-'+String(tmr.getMonth()+1).padStart(2,'0')+'-
 document.getElementById('f-checkout').value=tmrStr;
 populateRoomSel();renderDash();
 loadFromSheets();
+loadHousekeeping();
+setInterval(loadHousekeeping, 60000);
 checkLogin();
 initReport();
 setLang(currentLang);

@@ -1499,22 +1499,20 @@ function submitBooking(){
   if(ov){err.style.display='block';err.textContent='⚠️ Room '+room+' already has a reservation overlapping these dates ('+ov.guest+', '+fmtDate(ov.checkin)+'–'+fmtDate(ov.checkout)+').';return}
   err.style.display='none';
 
+  const isEditing = !!editingId;
+  const editId = editingId;
+  const newId = 'RES'+Date.now(); // capture before push for new bookings
   if(editingId){
     const i=reservations.findIndex(r=>r.id===editingId);
     reservations[i]={...reservations[i],firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
   }else{
-    reservations.push({id:'RES'+Date.now(),firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString(),createdBy:currentStaff?currentStaff.name:'Unknown'});
+    reservations.push({id:newId,firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString(),createdBy:currentStaff?currentStaff.name:'Unknown'});
   }
-  const isEditing = !!editingId;
-  const editId = editingId; // capture before clearForm clears it
   save();
   clearForm();
-  let savedRes;
-  if(isEditing){
-    savedRes = reservations.find(r=>r.id===editId);
-  } else {
-    savedRes = reservations.find(r=>r.guest===guest&&r.room===room&&r.checkin===checkin);
-  }
+  const savedRes = isEditing
+    ? reservations.find(r=>r.id===editId)
+    : reservations.find(r=>r.id===newId);
   if(savedRes) sendLineNotify(isEditing ? '✏️ Booking Amended' : '🆕 New Booking', savedRes);
   alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
 }

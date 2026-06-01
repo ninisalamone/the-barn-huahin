@@ -1160,6 +1160,11 @@ function renderDash(){
       if(res){
         const n=nights(res.checkin,res.checkout);
         const rate=parseFloat(res.rate)||0;
+        const ftot=folioTotals(res.id);
+        const fHasData=getFolio(res.id).charges.length>0||getFolio(res.id).payments.length>0;
+        const balDue=ftot.balance;
+        const balColor=balDue>0?'#f97316':balDue===0&&fHasData?'#6ee7b7':'#9ca3af';
+        const balLabel=balDue>0?'Balance Due':balDue===0&&fHasData?'Settled':'No Folio';
         tip='<div class="tooltip">'+
           (departingToday?'<div style="color:#f59e0b;font-weight:600;margin-bottom:4px">⏳ Departing today</div>':'')+
           '<div class="tt-line"><span class="tt-key">Guest</span><span class="tt-val">'+res.guest+'</span></div>'+
@@ -1168,6 +1173,8 @@ function renderDash(){
           '<div class="tt-line"><span class="tt-key">Nights</span><span class="tt-val">'+n+'</span></div>'+
           (rate?'<div class="tt-line"><span class="tt-key">Rate/Night</span><span class="tt-val">฿'+rate.toLocaleString()+'</span></div>':'')+
           (rate?'<div class="tt-line"><span class="tt-key">Total</span><span class="tt-val">฿'+(rate*n).toLocaleString()+'</span></div>':'')+
+          '<hr class="tt-divider">'+
+          '<div class="tt-line"><span class="tt-key">'+balLabel+'</span><span class="tt-val" style="color:'+balColor+';font-weight:700">'+(fHasData?'฿'+Math.abs(balDue).toLocaleString():'—')+'</span></div>'+
           (res.pet?'<hr class="tt-divider"><div class="tt-line"><span class="tt-key">🐾 Pet</span><span class="tt-val">Yes</span></div>':'')+
           nextHtml+
         '</div>';
@@ -2223,8 +2230,8 @@ function renderFolioModal(){
     '<span style="font-size:1.25rem">\u0e3f'+Math.abs(tot.balance).toLocaleString('en-US')+'<\/span>'+
   '<\/div>';
   h+='<div class="folio-print-bar">'+
-    '<button class="btn btn-primary" onclick="printFolio(\''+resId+'\')">\ud83d\udda8\ufe0f Print Folio<\/button> '+
-    '<button class="btn btn-blue" onclick="printReceipt(\''+resId+'\')">\ud83e\uddfe Print Receipt<\/button>'+
+    '<button class="btn btn-primary" onclick="printFolio(\''+resId+'\')">🖨️ Print Folio<\/button> '+
+    '<button class="btn btn-blue" onclick="printReceipt(\''+resId+'\')">🧾 Print Receipt<\/button>'+
   '<\/div>';
 
   document.getElementById('folioModalBody').innerHTML=h;
@@ -2309,7 +2316,17 @@ function generateFolioHTML(resId,isReceipt){
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
     '<title>'+(isReceipt?'Receipt':'Folio')+' \u2014 Room '+res.room+'<\/title>'+
-    '<style>'+_folioCSS()+'<\/style><\/head><body>'+
+    '<style>'+_folioCSS()+
+    '@media print{.no-print{display:none!important}}'+
+    '.no-print{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;gap:8px}'+
+    '.fp-btn{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;padding:10px 18px;border:none;border-radius:6px;cursor:pointer}'+
+    '.fp-btn-p{background:#1B3A6B;color:#fff}.fp-btn-p:hover{background:#0F2444}'+
+    '.fp-btn-s{background:#3B72C4;color:#fff}.fp-btn-s:hover{background:#244E96}'+
+    '<\/style><\/head><body>'+
+    '<div class="no-print">'+
+      '<button class="fp-btn fp-btn-p" onclick="window.print()">🖨️ Print<\/button>'+
+      '<button class="fp-btn fp-btn-s" onclick="window.print()">💾 Save as PDF<\/button>'+
+    '<\/div>'+
     '<div class="lh">'+
       '<img src="data:image\/jpeg;base64,'+LOGO_B64+'" class="logo">'+
       '<div class="pi">'+
@@ -2339,12 +2356,18 @@ function generateFolioHTML(resId,isReceipt){
 }
 
 function printFolio(resId){
-  const blob=new Blob([generateFolioHTML(resId,false)],{type:'text\/html'});
-  window.open(URL.createObjectURL(blob),'_blank');
+  const w=window.open('','_blank');
+  w.document.write(generateFolioHTML(resId,false));
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),600);
 }
 function printReceipt(resId){
-  const blob=new Blob([generateFolioHTML(resId,true)],{type:'text\/html'});
-  window.open(URL.createObjectURL(blob),'_blank');
+  const w=window.open('','_blank');
+  w.document.write(generateFolioHTML(resId,true));
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),600);
 }
 
 function renderFolioView(){

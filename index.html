@@ -1565,8 +1565,8 @@ function renderRes(){
   }).join('');
 }
 
-function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();renderDash();renderRes()}}
-function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';setDirty(r.room);save();renderDash();renderRes()}}
+function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();sendLineNotify('✅ Checked-In',r);renderDash();renderRes()}}
+function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';setDirty(r.room);save();sendLineNotify('🏁 Checked-Out',r);renderDash();renderRes()}}
 function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}

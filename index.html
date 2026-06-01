@@ -503,6 +503,106 @@
     font-size:0.58rem; color:var(--gray); line-height:1;
     pointer-events:none;
   }
+
+  /* ── FOLIO MODAL ── */
+  .modal-wide{max-width:720px}
+
+  /* Guest info card at top */
+  .folio-guest-info{
+    display:grid;grid-template-columns:1fr 1fr;gap:0;
+    background:var(--bg);border:1px solid var(--border);border-radius:10px;
+    overflow:hidden;margin-bottom:18px;
+  }
+  .folio-guest-row{
+    display:flex;align-items:center;gap:0;
+    padding:8px 14px;border-bottom:1px solid var(--border);
+  }
+  .folio-guest-row:nth-last-child(-n+2){border-bottom:none}
+  .folio-lbl{
+    font-size:0.7rem;font-weight:700;color:var(--gray);
+    text-transform:uppercase;letter-spacing:0.7px;
+    min-width:76px;flex-shrink:0;
+  }
+  .folio-val{
+    font-size:0.88rem;font-weight:600;color:var(--navy-dark);
+  }
+
+  /* Section headers */
+  .folio-sec-title{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:0.72rem;font-weight:700;color:var(--navy);
+    text-transform:uppercase;letter-spacing:1.2px;
+    background:var(--navy-dark);color:#fff;
+    padding:8px 12px;border-radius:8px 8px 0 0;
+    margin-top:0;
+  }
+  .folio-sec-title .btn{font-size:0.72rem;padding:4px 10px}
+
+  /* Tables */
+  .folio-tbl{
+    width:100%;border-collapse:collapse;
+    border:1px solid var(--border);border-top:none;
+    border-radius:0 0 8px 8px;overflow:hidden;
+    margin-bottom:16px;font-size:0.82rem;
+  }
+  .folio-tbl thead th{
+    background:var(--sky);color:var(--navy);
+    padding:7px 10px;text-align:left;
+    font-size:0.7rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.6px;
+    border-bottom:2px solid var(--border);
+  }
+  .folio-tbl thead th.r{text-align:right}
+  .folio-tbl tbody td{
+    padding:8px 10px;border-bottom:1px solid #eef2f9;
+    vertical-align:middle;
+  }
+  .folio-tbl tbody tr:last-child td{border-bottom:none}
+  .folio-tbl tbody tr:hover td{background:#f5f8fd}
+  .folio-tbl td.r{text-align:right}
+  .folio-tbl td.fw{font-weight:700}
+  .folio-tbl tfoot td{
+    padding:9px 10px;font-weight:700;
+    background:var(--sky);border-top:2px solid var(--border);
+    font-size:0.9rem;
+  }
+  .folio-tbl tfoot td.r{text-align:right;color:var(--navy)}
+
+  /* Action buttons in table */
+  .folio-act{white-space:nowrap;text-align:right;width:70px}
+  .folio-act .btn{padding:3px 7px;font-size:0.72rem}
+
+  /* Empty state */
+  .folio-empty{
+    text-align:center;color:var(--gray);font-style:italic;
+    padding:14px!important;font-size:0.8rem;
+  }
+
+  /* Type badge */
+  .folio-type-badge{
+    display:inline-block;margin-left:6px;
+    font-size:0.62rem;font-weight:700;
+    padding:1px 6px;border-radius:10px;
+    text-transform:uppercase;vertical-align:middle;
+  }
+  .folio-type-room{background:#dbeafe;color:#1e40af}
+  .folio-type-food{background:#d1fae5;color:#065f46}
+  .folio-type-service{background:#fce7f3;color:#9d174d}
+  .folio-type-other{background:#f3f4f6;color:#374151}
+
+  /* Balance bar */
+  .folio-balance{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;border:2px solid;border-radius:10px;
+    margin:16px 0 12px;font-weight:700;font-size:0.95rem;
+  }
+
+  /* Print bar */
+  .folio-print-bar{
+    display:flex;gap:10px;flex-wrap:wrap;
+    padding-top:12px;border-top:1px solid var(--border);
+    margin-top:4px;
+  }
 </style>
 </head>
 <body>
@@ -2151,15 +2251,15 @@ function renderFolioModal(){
 
   let h='<div class="folio-guest-info">'+
     '<div class="folio-guest-row"><span class="folio-lbl">Guest<\/span><span class="folio-val">'+esc(res.guest)+'<\/span><\/div>'+
-    '<div class="folio-guest-row"><span class="folio-lbl">Room<\/span><span class="folio-val">'+esc(res.room)+(roomObj?' \u00b7 '+esc(roomObj.type):'')+'<\/span><\/div>'+
     '<div class="folio-guest-row"><span class="folio-lbl">Phone<\/span><span class="folio-val">'+(res.phone?esc(res.phone):'\u2014')+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Room<\/span><span class="folio-val">'+esc(res.room)+(roomObj?' \u00b7 '+esc(roomObj.type):'')+'<\/span><\/div>'+
+    '<div class="folio-guest-row"><span class="folio-lbl">Nights<\/span><span class="folio-val">'+n+' night'+(n!==1?'s':'')+'<\/span><\/div>'+
     '<div class="folio-guest-row"><span class="folio-lbl">Check-in<\/span><span class="folio-val">'+fmtDate(res.checkin)+'<\/span><\/div>'+
     '<div class="folio-guest-row"><span class="folio-lbl">Check-out<\/span><span class="folio-val">'+fmtDate(res.checkout)+'<\/span><\/div>'+
-    '<div class="folio-guest-row"><span class="folio-lbl">Nights<\/span><span class="folio-val">'+n+'<\/span><\/div>'+
   '<\/div>';
 
   // CHARGES
-  h+='<div class="folio-sec-title">CHARGES'+
+  h+='<div class="folio-sec-title">📋 CHARGES'+
     '<button class="btn btn-sm btn-blue" onclick="setFolioMode(\'addCharge\')">+ Add Charge<\/button><\/div>';
   if(_folioMode==='addCharge')h+=renderChargeForm(null,resId);
   h+='<table class="folio-tbl"><thead><tr>'+
@@ -2190,7 +2290,7 @@ function renderFolioModal(){
     '<td><\/td><\/tr><\/tfoot><\/table>';
 
   // PAYMENTS
-  h+='<div class="folio-sec-title" style="margin-top:18px">PAYMENTS \/ DEPOSITS'+
+  h+='<div class="folio-sec-title" style="margin-top:20px">💳 PAYMENTS \/ DEPOSITS'+
     '<button class="btn btn-sm" style="background:#d1fae5;color:#065f46" onclick="setFolioMode(\'addPayment\')">+ Add Payment<\/button><\/div>';
   if(_folioMode==='addPayment')h+=renderPaymentForm(null,resId);
   h+='<table class="folio-tbl"><thead><tr>'+
@@ -2224,13 +2324,19 @@ function renderFolioModal(){
     'border-color:var(--occupied);color:var(--occupied);background:#fdf3ee':
     settled?'border-color:var(--available);color:var(--available);background:#edf7f1':
     'border-color:var(--reserved);color:var(--reserved);background:#e8f0fb';
-  const bLabel=tot.balance>0?'BALANCE DUE':settled?'\u2705 SETTLED':'\u21A9 OVERPAID';
+  const bLabel=tot.balance>0?'⚠️ BALANCE DUE':settled?'✅ SETTLED — PAID IN FULL':'↩ OVERPAID';
   h+='<div class="folio-balance" style="'+bStyle+'">'+
-    '<span>'+bLabel+'<\/span>'+
-    '<span style="font-size:1.25rem">\u0e3f'+Math.abs(tot.balance).toLocaleString('en-US')+'<\/span>'+
+    '<div>'+
+      '<div style="font-size:0.72rem;opacity:0.75;margin-bottom:2px">ACCOUNT SUMMARY<\/div>'+
+      '<div style="font-size:1rem;font-weight:800">'+bLabel+'<\/div>'+
+    '<\/div>'+
+    '<div style="text-align:right">'+
+      '<div style="font-size:0.72rem;opacity:0.75;margin-bottom:2px">'+(tot.balance>0?'Amount Owing':settled?'Total Paid':'Refund Amount')+'<\/div>'+
+      '<div style="font-size:1.5rem;font-weight:800">\u0e3f'+Math.abs(tot.balance).toLocaleString('en-US')+'<\/div>'+
+    '<\/div>'+
   '<\/div>';
   h+='<div class="folio-print-bar">'+
-    '<button class="btn btn-primary" onclick="printFolio(\''+resId+'\')">🖨️ Print Folio<\/button> '+
+    '<button class="btn btn-primary" onclick="printFolio(\''+resId+'\')">🖨️ Print Folio<\/button>'+
     '<button class="btn btn-blue" onclick="printReceipt(\''+resId+'\')">🧾 Print Receipt<\/button>'+
   '<\/div>';
 

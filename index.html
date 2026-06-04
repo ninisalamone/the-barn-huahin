@@ -705,6 +705,7 @@
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-breakfast"><span data-key="breakfast">🍳 Include Breakfast</span></div></label></div>
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow" id="extraBedRow"><input type="checkbox" id="f-extrabed"><span data-key="extrabed">🛏️ Extra Bed (charged)</span></div></label></div>
       <div class="fgrp"><label style="cursor:pointer"><div class="cbrow"><input type="checkbox" id="f-pet"><span data-key="pet">🐾 มีสัตว์เลี้ยง</span></div></label></div>
+      <div class="fgrp"><label style="cursor:pointer"><div class="cbrow" id="compRow" style="border-color:#f59e0b;background:#fffbeb"><input type="checkbox" id="f-comp" onchange="onCompChange()"><span>🎁 Complimentary (฿0)</span></div></label></div>
       <div class="fgrp full"><label><span data-key="remark">Remark / Notes</span></label><textarea id="f-remark" placeholder="Special requests, notes..."></textarea></div>
     </div>
     <div id="extraBedNote" style="display:none;margin-top:12px;padding:10px;background:#fff8e1;border-radius:8px;font-size:0.82rem;color:#e65100"></div>
@@ -1431,6 +1432,12 @@ function onRoomChange(){
   else{row.style.opacity='1';cb.disabled=false;note.style.display='none'}
 }
 
+function onCompChange(){
+  const comp = document.getElementById('f-comp').checked;
+  const rateEl = document.getElementById('f-rate');
+  if(comp){ rateEl.value='0'; rateEl.disabled=true; rateEl.style.opacity='0.5'; }
+  else { rateEl.disabled=false; rateEl.style.opacity='1'; rateEl.value=''; }
+}
 function prefillRoom(n){showView('booking');setTimeout(()=>{document.getElementById('f-room').value=n;onRoomChange()},50)}
 
 function clearForm(){
@@ -1440,6 +1447,9 @@ function clearForm(){
   document.getElementById('f-breakfast').checked=false;
   document.getElementById('f-extrabed').checked=false;
   document.getElementById('f-pet').checked=false;
+  document.getElementById('f-comp').checked=false;
+  const rateEl=document.getElementById('f-rate');
+  rateEl.disabled=false; rateEl.style.opacity='1';
   document.getElementById('formError').style.display='none';
   document.getElementById('extraBedNote').style.display='none';
   editingId=null;
@@ -1465,6 +1475,8 @@ function editRes(id){
     document.getElementById('f-breakfast').checked=!!res.breakfast;
     document.getElementById('f-extrabed').checked=!!res.extrabed;
     document.getElementById('f-pet').checked=!!res.pet;
+    document.getElementById('f-comp').checked=!!res.comp;
+    onCompChange();
     document.getElementById('f-remark').value=res.remark||'';
     onRoomChange();
     document.querySelector('#view-booking .sec-title').textContent='✏️ Edit Reservation';
@@ -1486,6 +1498,7 @@ function submitBooking(){
   const breakfast=document.getElementById('f-breakfast').checked;
   const extrabed=document.getElementById('f-extrabed').checked;
   const pet=document.getElementById('f-pet').checked;
+  const comp=document.getElementById('f-comp').checked;
   const remark=document.getElementById('f-remark').value.trim();
   const err=document.getElementById('formError');
 
@@ -1504,9 +1517,9 @@ function submitBooking(){
   const newId = 'RES'+Date.now(); // capture before push for new bookings
   if(editingId){
     const i=reservations.findIndex(r=>r.id===editingId);
-    reservations[i]={...reservations[i],firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark};
+    reservations[i]={...reservations[i],firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,comp,remark};
   }else{
-    reservations.push({id:newId,firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,remark,status:'Reserved',createdAt:new Date().toISOString(),createdBy:currentStaff?currentStaff.name:'Unknown'});
+    reservations.push({id:newId,firstname,lastname,guest,phone,room,source,checkin,checkout,guests,rate,payment,breakfast,extrabed,pet,comp,remark,status:'Reserved',createdAt:new Date().toISOString(),createdBy:currentStaff?currentStaff.name:'Unknown'});
   }
   save();
   clearForm();
@@ -1514,7 +1527,7 @@ function submitBooking(){
     ? reservations.find(r=>r.id===editId)
     : reservations.find(r=>r.id===newId);
   if(savedRes) sendLineNotify(isEditing ? '✏️ Booking Amended' : '🆕 New Booking', savedRes);
-  alert('✅ Reservation confirmed for '+guest+' — Room '+room);showView('reservations');
+  setTimeout(()=>{ alert('✅ Reservation confirmed for '+guest+' — Room '+room); showView('reservations'); }, 300);
 }
 
 function populateFilterRoom(){
@@ -1554,6 +1567,7 @@ function renderRes(){
         (total?'<div class="res-det"><div class="det-lbl">Total</div><div class="det-val" style="color:var(--available);font-weight:700">฿'+total.toLocaleString()+'</div></div>':'')+
       '</div>'+
       '<div class="res-badges"><span class="badge b-src">'+r.source+'</span>'+
+        (r.comp?'<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b">🎁 Complimentary</span>':'')+
         (r.breakfast?'<span class="badge b-bkf">🍳 Breakfast</span>':'')+
         (r.extrabed?'<span class="badge b-xbd">🛏️ Extra Bed</span>':'')+
         (r.pet?'<span class="badge b-pet">🐾 Pet</span>':'')+
@@ -1565,8 +1579,8 @@ function renderRes(){
   }).join('');
 }
 
-function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();sendLineNotify('✅ Checked-In',r);renderDash();renderRes()}}
-function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';setDirty(r.room);save();sendLineNotify('🏁 Checked-Out',r);renderDash();renderRes()}}
+function checkIn(id){if(!confirm('Confirm check-in?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-In';save();renderDash();renderRes()}}
+function checkOut(id){if(!confirm('Confirm check-out?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Checked-Out';setDirty(r.room);save();renderDash();renderRes()}}
 function cancelRes(id){if(!confirm('Cancel this reservation?'))return;const r=reservations.find(x=>x.id===id);if(r){r.status='Cancelled';save();sendLineNotify('❌ Cancelled',r);renderDash();renderRes()}}
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1933,13 +1947,15 @@ function renderReport(){
 
   const checkedOut = reservations.filter(r=> r.status==='Checked-Out' && r.checkout>=monthStart && r.checkout<=monthEnd+'z');
   const totalRevenue = checkedOut.reduce((sum,r)=>{
+    if(r.comp) return sum; // exclude complimentary
     const rate = parseFloat(r.rate)||0;
     const n = nights(r.checkin,r.checkout);
     return sum + rate*n;
   },0);
   const totalNights = checkedOut.reduce((sum,r)=>sum+nights(r.checkin,r.checkout),0);
+  const paidNights = checkedOut.filter(r=>!r.comp).reduce((sum,r)=>sum+nights(r.checkin,r.checkout),0);
   const occupancyRate = Math.round((totalNights/(ROOMS.length*daysInMonth))*100);
-  const avgRate = checkedOut.length ? Math.round(totalRevenue/totalNights||0) : 0;
+  const avgRate = paidNights ? Math.round(totalRevenue/paidNights||0) : 0;
 
   document.getElementById('repStats').innerHTML=`
     <div class="report-card"><div class="report-num">${monthRes.length}</div><div class="report-lbl">${t('totalBookings')}</div></div>

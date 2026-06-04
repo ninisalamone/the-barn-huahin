@@ -1490,7 +1490,7 @@ function submitBooking(){
   const err=document.getElementById('formError');
 
   if(!firstname||!room||!source||!checkin||!checkout){err.style.display='block';err.textContent='⚠️ Please fill in all required fields (First Name, Room, Source, Dates).';return}
-  if(!rate){err.style.display='block';err.textContent='⚠️ Please enter the room rate per night.';return}
+  if(document.getElementById('f-rate').value.trim()===''){err.style.display='block';err.textContent='⚠️ Please enter the room rate per night (enter 0 for complimentary).';return}
   if(checkin>=checkout){err.style.display='block';err.textContent='⚠️ Check-out must be after check-in.';return}
   const ri=ROOMS.find(r=>r.num===room);
   const mx=ri.maxGuest+(ri.extraBed&&extrabed?1:0);
@@ -2010,29 +2010,60 @@ function setResTab(tab){
 }
 
 // ===================== LINE NOTIFICATION =====================
+const LINE_NOTIFY_TOKEN = 'YOUR_LINE_NOTIFY_TOKEN'; // ← paste LINE Notify token here
+
 function sendLineNotify(type, res){
   if(!res) return;
   const n = Math.max(0,Math.round((new Date(String(res.checkout).split('T')[0])-new Date(String(res.checkin).split('T')[0]))/86400000));
   const total = (parseFloat(res.rate)||0) * n;
   const staffData = currentStaff || JSON.parse(sessionStorage.getItem('barnStaff')||'{}');
   const staffName = staffData.name || 'Unknown';
-  fetch(GS_URL, {
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},
-    body: JSON.stringify({
-      action:'notify',
-      type: type,
-      staffName: staffName,
-      reservation: {
+  const ci = String(res.checkin).split('T')[0];
+  const co = String(res.checkout).split('T')[0];
+
+  const msg = [
+    '\n🏡 The Barn Hua Hin',
+    '━━━━━━━━━━━━━━━',
+    '📋 ' + type,
+    '━━━━━━━━━━━━━━━',
+    '🧑‍💼 By: ' + staffName,
+    '👤 Guest: ' + (res.guest||''),
+    '📞 Phone: ' + (res.phone||'-'),
+    '🏠 Room: ' + (res.room||''),
+    '📅 Check-in: ' + ci,
+    '📅 Check-out: ' + co,
+    '🌙 Nights: ' + n,
+    '💰 Rate: ฿' + Number(res.rate||0).toLocaleString() + '/night',
+    '💵 Total: ฿' + Number(total).toLocaleString(),
+    '📌 Source: ' + (res.source||''),
+    '💳 Payment: ' + (res.payment||'-'),
+    res.pet       ? '🐾 Pet: Yes' : '',
+    res.breakfast ? '🍳 Breakfast: Yes' : '',
+    res.remark    ? '📝 Note: ' + res.remark : ''
+  ].filter(Boolean).join('\n');
+
+  const params = new URLSearchParams();
+  params.append('message', msg);
+
+  fetch('https://notify-api.line.me/api/notify', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: params.toString()
+  }).catch(()=>{
+    // fallback to GAS if LINE Notify fails
+    fetch(GS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'notify', type, staffName, reservation:{
         guest:res.guest, phone:res.phone, room:res.room,
-        checkin:String(res.checkin).split('T')[0],
-        checkout:String(res.checkout).split('T')[0],
-        source:res.source, rate:res.rate||0, payment:res.payment||'',
-        pet:res.pet, breakfast:res.breakfast, remark:res.remark
-      }
-    })
-  }).catch(()=>{});
+        checkin:ci, checkout:co, source:res.source, rate:res.rate||0,
+        payment:res.payment||'', pet:res.pet, breakfast:res.breakfast, remark:res.remark
+      }})
+    }).catch(()=>{});
+  });
 }
 
 // ===================== FOLIO =====================
